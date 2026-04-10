@@ -375,10 +375,21 @@ body.dark .paste-info strong{color:#E2E8F0;}
       <span class="settings-label">🌙 다크모드</span>
       <button class="toggle-btn" id="dark-toggle"></button>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">🔕 알림 끄기</span>
+      <button class="toggle-btn" id="notif-toggle"></button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">👑 관리자 모드</span>
+      <span id="admin-status" style="font-size:12px;color:var(--gray)">비활성</span>
+    </div>
+    <input id="admin-pw-input" class="settings-input" type="password" placeholder="관리자 비밀번호 입력">
+    <button class="settings-save" id="admin-login-btn" style="margin-bottom:12px">관리자 인증</button>
     <div class="settings-label" style="margin-bottom:8px">닉네임 변경</div>
     <input id="nickname-input" class="settings-input" placeholder="새 닉네임 입력" maxlength="10">
     <button class="settings-save" id="nickname-save">저장</button>
     <button class="settings-close" id="settings-close">닫기</button>
+    <button class="settings-close" id="admin-clear-btn" style="color:var(--red);border-color:#FECACA;margin-top:4px;display:none">🗑️ 전체 채팅 삭제 (관리자)</button>
   </div>
 </div>
 
@@ -788,7 +799,7 @@ function renderMsgs(msgs) {
     if (!msg.deleted) actions += '<button class="action-btn pin" data-action="pin" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">📌공지</button>';
     if (isMe && !msg.deleted) actions += '<button class="action-btn" data-action="edit" data-key="' + msg.key + '" data-text="' + esc(msg.text||'') + '">수정</button>';
     if (!msg.deleted) actions += '<button class="action-btn" data-action="copy" data-text="' + esc(msg.text||'') + '">복사</button>';
-    if (isMe && !msg.deleted) actions += '<button class="action-btn del" data-action="del" data-key="' + msg.key + '">삭제</button>';
+    if ((isMe || isAdmin) && !msg.deleted) actions += '<button class="action-btn del" data-action="del" data-key="' + msg.key + '">삭제</button>';
     actions += '<button class="action-btn" data-action="emoji" data-key="' + msg.key + '">😊</button>';
     actions += '<button class="action-btn" data-action="reply" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">↩️</button>';
     actions += '</div>';
@@ -1067,10 +1078,11 @@ function showNewMsgPopup(msg) {
 }
 
 function sendBrowserNotif(name, text) {
+  if (notifOff) return;
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
   if (document.hidden) {
-    var n = new Notification('💬 ' + name, { body: text || '', icon: 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js' });
+    var n = new Notification('💬 ' + name, { body: text || '' });
     n.onclick = function() { window.focus(); n.close(); };
     setTimeout(function() { n.close(); }, 5000);
   }
@@ -1095,6 +1107,55 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 80) + 'px';
 }
 
+// ===== 알림 설정 =====
+var notifOff = localStorage.getItem('gg_notif_off') === '1';
+
+function applyNotif(off) {
+  notifOff = off;
+  var btn = document.getElementById('notif-toggle');
+  if (btn) {
+    if (off) btn.classList.add('on');
+    else btn.classList.remove('on');
+  }
+  localStorage.setItem('gg_notif_off', off ? '1' : '0');
+}
+
+document.getElementById('notif-toggle').addEventListener('click', function() {
+  applyNotif(!notifOff);
+});
+
+if (localStorage.getItem('gg_notif_off') === '1') applyNotif(true);
+
+// ===== 관리자 모드 =====
+var ADMIN_PW = '161201';
+var isAdmin = localStorage.getItem('gg_admin') === '1';
+
+function applyAdmin(on) {
+  isAdmin = on;
+  var status = document.getElementById('admin-status');
+  if (status) {
+    status.textContent = on ? '활성 👑' : '비활성';
+    status.style.color = on ? '#E8A020' : 'var(--gray)';
+  }
+  localStorage.setItem('gg_admin', on ? '1' : '0');
+}
+
+document.getElementById('admin-login-btn').addEventListener('click', function() {
+  var pw = document.getElementById('admin-pw-input').value;
+  if (pw === ADMIN_PW) {
+    applyAdmin(true);
+    document.getElementById('admin-pw-input').value = '';
+    showToast('관리자 모드가 활성화됐습니다! 👑');
+  } else if (pw === '' && isAdmin) {
+    applyAdmin(false);
+    showToast('관리자 모드가 해제됐습니다.');
+  } else {
+    showToast('비밀번호가 틀렸습니다!');
+  }
+});
+
+if (isAdmin) applyAdmin(true);
+
 // ===== 다크모드 =====
 function applyDark(on) {
   if (on) {
@@ -1115,10 +1176,7 @@ document.getElementById('dark-toggle').addEventListener('click', function() {
 if (localStorage.getItem('gg_dark') === '1') applyDark(true);
 
 // ===== 설정 모달 =====
-document.getElementById('settings-btn').addEventListener('click', function() {
-  document.getElementById('settings-modal').classList.add('show');
-  document.getElementById('nickname-input').value = myName || '';
-});
+
 
 document.getElementById('settings-close').addEventListener('click', function() {
   document.getElementById('settings-modal').classList.remove('show');
@@ -1281,6 +1339,24 @@ document.getElementById('paste-send').addEventListener('click', function() {
   document.getElementById('paste-thumb').src = '';
   showToast('이미지를 전송했어요!');
 });
+
+// 관리자 전체 채팅 삭제
+document.getElementById('admin-clear-btn').addEventListener('click', function() {
+  if (!isAdmin) return;
+  if (!confirm('전체 채팅을 삭제할까요? 되돌릴 수 없어요!')) return;
+  remove(ref(db, 'messages'));
+  remove(ref(db, 'pinned'));
+  document.getElementById('settings-modal').classList.remove('show');
+  showToast('전체 채팅이 삭제됐습니다.');
+});
+
+// 설정 열 때 관리자 버튼 표시 여부
+document.getElementById('settings-btn').addEventListener('click', function() {
+  document.getElementById('settings-modal').classList.add('show');
+  document.getElementById('nickname-input').value = myName || '';
+  document.getElementById('admin-clear-btn').style.display = isAdmin ? 'block' : 'none';
+  applyAdmin(isAdmin);
+}, true);
 
 // 자동 로그인
 var saved = localStorage.getItem('gg_chat_name');
