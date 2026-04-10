@@ -586,7 +586,20 @@ function doSend() {
     doUnsetReply();
   }
 
-  push(ref(db, getPath()), msgData);
+  push(ref(db, getPath()), msgData).then(function() {
+    // 200개 초과 시 오래된 메시지 삭제
+    var path = getPath();
+    onValue(ref(db, path), function(snap) {
+      var data = snap.val() || {};
+      var keys = Object.keys(data).sort();
+      if (keys.length > 200) {
+        var deleteCount = keys.length - 200;
+        keys.slice(0, deleteCount).forEach(function(k) {
+          remove(ref(db, path + '/' + k));
+        });
+      }
+    }, { onlyOnce: true });
+  });
 }
 
 // 공지 전송
