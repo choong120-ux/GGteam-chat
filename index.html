@@ -672,7 +672,7 @@ function renderMsgs(msgs) {
       if (showName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row">';
       html += '<div class="msg-bubble" style="padding:4px">';
-      html += '<img src="' + esc(msg.imageData || '') + '" class="msg-image" style="margin:0;max-width:220px;max-height:200px">';
+      var img = new Image(); img.src = msg.imageData || ''; img.className = 'msg-image'; img.style.margin = '0'; img.style.maxWidth = '220px'; img.style.maxHeight = '200px'; html += img.outerHTML;
       html += '</div>';
       html += '<div class="msg-time">' + timeStr + '</div>';
       html += '</div></div>';
