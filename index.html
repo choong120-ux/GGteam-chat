@@ -261,6 +261,17 @@ body.dark .poll-input{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
 .poll-cancel{width:100%;height:40px;background:var(--bg);color:#555;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;}
 
 .c0{color:#2E5FA3}.c1{color:#1D9E75}.c2{color:#E8A020}.c3{color:#9B59B6}.c4{color:#E24B4A}.c5{color:#0891B2}
+
+/* 이미지 붙여넣기 미리보기 */
+#paste-preview{background:white;border-top:1px solid var(--border);padding:8px 14px;display:none;align-items:center;gap:10px;flex-shrink:0;}
+body.dark #paste-preview{background:#13132A;border-color:#2D2D44;}
+#paste-preview.show{display:flex;}
+#paste-thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+.paste-info{flex:1;font-size:12px;color:var(--gray);}
+.paste-info strong{display:block;color:var(--navy);margin-bottom:2px;}
+body.dark .paste-info strong{color:#E2E8F0;}
+.paste-cancel{background:none;border:none;font-size:18px;color:var(--gray);cursor:pointer;}
+.paste-send{background:var(--blue);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 </style>
 </head>
 <body>
@@ -322,6 +333,15 @@ body.dark .poll-input{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
 
 <div class="typing-bar" id="typing-bar"></div>
 
+<div id="paste-preview">
+  <img id="paste-thumb" src="" alt="미리보기">
+  <div class="paste-info">
+    <strong>이미지 붙여넣기</strong>
+    <span id="paste-size"></span>
+  </div>
+  <button class="paste-cancel" id="paste-cancel">✕</button>
+  <button class="paste-send" id="paste-send">전송</button>
+</div>
 <div id="reply-bar">
   <div class="reply-bar-content">
     <span class="reply-bar-name" id="reply-bar-name"></span>
@@ -635,6 +655,29 @@ function renderMsgs(msgs) {
     if (msg.type === 'system') {
       html += '<div class="system-msg">' + esc(msg.text) + '</div>';
       prevName = ''; return;
+    }
+
+    if (msg.type === 'image') {
+      var isMe = msg.name === myName;
+      var color = isMe ? '' : getColor(msg.name);
+      var d = msg.time ? new Date(msg.time) : new Date();
+      var dateStr = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+      var timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
+      if (dateStr !== lastDate) {
+        html += '<div class="date-divider">' + dateStr + '</div>';
+        lastDate = dateStr; prevName = '';
+      }
+      var showName = !isMe && msg.name !== prevName;
+      html += '<div class="msg-wrap ' + (isMe?'me':'other') + '">';
+      if (showName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+      html += '<div class="msg-row">';
+      html += '<div class="msg-bubble" style="padding:4px;' + (isMe ? 'background:var(--blue)' : 'background:white') + '">';
+      html += '<img src="' + (msg.imageData||'') + '" class="msg-image" style="margin:0;max-width:220px;max-height:200px" onerror="this.style.display='none'" onclick="window.open(this.src,'_blank')">';
+      html += '</div>';
+      html += '<div class="msg-time">' + timeStr + '</div>';
+      html += '</div></div>';
+      prevName = msg.name;
+      return;
     }
 
     if (msg.type === 'poll') {
@@ -1157,6 +1200,61 @@ function votePoll(msgKey, optKey) {
     else set(voteRef, true);
   }, { onlyOnce: true });
 }
+
+// ===== 이미지 붙여넣기 =====
+var pasteImageData = null;
+
+document.addEventListener('paste', function(e) {
+  if (!myName) return;
+  var items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      var file = items[i].getAsFile();
+      if (!file) continue;
+      // 5MB 제한
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('5MB 이하 이미지만 전송 가능해요!');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        pasteImageData = ev.target.result;
+        document.getElementById('paste-thumb').src = pasteImageData;
+        var kb = Math.round(file.size / 1024);
+        document.getElementById('paste-size').textContent = kb + 'KB';
+        document.getElementById('paste-preview').classList.add('show');
+      };
+      reader.readAsDataURL(file);
+      e.preventDefault();
+      return;
+    }
+  }
+});
+
+document.getElementById('paste-cancel').addEventListener('click', function() {
+  pasteImageData = null;
+  document.getElementById('paste-preview').classList.remove('show');
+  document.getElementById('paste-thumb').src = '';
+});
+
+document.getElementById('paste-send').addEventListener('click', function() {
+  if (!pasteImageData || !myName) return;
+  if (currentTab === 'dm' && !dmTarget) { showToast('대화 상대를 선택해 주세요!'); return; }
+
+  push(ref(db, getPath()), {
+    name: myName,
+    type: 'image',
+    imageData: pasteImageData,
+    target: dmTarget || '',
+    time: serverTimestamp()
+  });
+
+  pasteImageData = null;
+  document.getElementById('paste-preview').classList.remove('show');
+  document.getElementById('paste-thumb').src = '';
+  showToast('이미지를 전송했어요!');
+});
 
 // 자동 로그인
 var saved = localStorage.getItem('gg_chat_name');
