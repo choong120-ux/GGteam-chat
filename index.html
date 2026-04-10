@@ -671,8 +671,7 @@ function renderMsgs(msgs) {
       html += '<div class="msg-wrap ' + (isMe?'me':'other') + '">';
       if (showName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row">';
-      html += '<div class="msg-bubble" style="padding:4px;' + (isMe ? 'background:var(--blue)' : 'background:white') + '">';
-      html += '<img src="' + (msg.imageData||'') + '" class="msg-image" style="margin:0;max-width:220px;max-height:200px" onerror="this.style.display='none'" onclick="window.open(this.src,'_blank')">';
+      var imgEl2 = document.createElement('img'); imgEl2.src = msg.imageData||''; imgEl2.className = 'msg-image'; imgEl2.style.cssText = 'margin:0;max-width:220px;max-height:200px'; imgEl2.onclick = function(){ window.open(this.src,'_blank'); }; html += '<div class="msg-bubble" style="padding:4px;' + (isMe ? 'background:var(--blue)' : 'background:white') + '">' + imgEl2.outerHTML + '</div>';
       html += '</div>';
       html += '<div class="msg-time">' + timeStr + '</div>';
       html += '</div></div>';
