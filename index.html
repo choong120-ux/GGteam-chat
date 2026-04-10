@@ -299,6 +299,7 @@ body.dark .paste-info strong{color:#E2E8F0;}
     <div class="online-badge"><div class="online-dot"></div><span id="online-count">0명</span></div>
     <button class="hdr-btn" id="search-btn">🔍</button>
     <button class="hdr-btn" id="poll-btn">📊</button>
+    <button class="hdr-btn" id="clear-btn" style="color:#E24B4A;border-color:rgba(226,75,74,0.4)">🗑️</button>
     <button class="hdr-btn" id="settings-btn">⚙️</button>
     <button class="hdr-btn" id="logout-btn">나가기</button>
   </div>
@@ -1137,6 +1138,7 @@ function applyAdmin(on) {
     status.textContent = on ? '활성 👑' : '비활성';
     status.style.color = on ? '#E8A020' : 'var(--gray)';
   }
+
   localStorage.setItem('gg_admin', on ? '1' : '0');
 }
 
@@ -1357,6 +1359,14 @@ document.getElementById('settings-btn').addEventListener('click', function() {
   document.getElementById('admin-clear-btn').style.display = isAdmin ? 'block' : 'none';
   applyAdmin(isAdmin);
 }, true);
+
+// 헤더 전체 삭제 버튼
+document.getElementById('clear-btn').addEventListener('click', function() {
+  if (!confirm('전체 채팅을 삭제할까요? 되돌릴 수 없어요!')) return;
+  remove(ref(db, 'messages'));
+  remove(ref(db, 'pinned'));
+  showToast('전체 채팅이 삭제됐습니다.');
+});
 
 // 자동 로그인
 var saved = localStorage.getItem('gg_chat_name');
