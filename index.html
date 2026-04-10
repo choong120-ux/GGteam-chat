@@ -194,6 +194,72 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);height:100vh;dis
 .empty .icon{font-size:40px;}
 .empty .text{font-size:13px;}
 
+/* 다크모드 */
+body.dark{--bg:#1A1A2E;--border:#2D2D44;--gray:#6B7280;--pale:#1E2035;}
+body.dark .header{background:linear-gradient(135deg,#0A0A1A,#0F1529);}
+body.dark #messages{background:#1A1A2E;}
+body.dark .msg-wrap.other .msg-bubble{background:#252537;color:#E2E8F0;border-color:#2D2D44;}
+body.dark .input-area{background:#13132A;border-color:#2D2D44;}
+body.dark .input-wrap{background:#252537;border-color:#2D2D44;}
+body.dark #msg-input{color:#E2E8F0;}
+body.dark .action-btn{background:#252537;border-color:#2D2D44;color:#9CA3AF;}
+body.dark .date-divider{color:#6B7280;}
+body.dark .date-divider::before,body.dark .date-divider::after{background:#2D2D44;}
+body.dark .system-msg{background:rgba(45,45,68,0.5);color:#6B7280;}
+body.dark #dm-wrap{background:#13132A;border-color:#2D2D44;}
+body.dark .dm-select{background:#252537;color:#E2E8F0;border-color:#2D2D44;}
+body.dark #reply-bar{background:#1E2035;border-color:#2D2D44;}
+body.dark .login-box{background:#252537;}
+body.dark .login-title{color:#E2E8F0;}
+body.dark .login-input{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
+
+/* 설정 모달 */
+#settings-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;}
+#settings-modal.show{display:flex;}
+.settings-box{background:white;border-radius:20px;padding:32px;width:320px;box-shadow:0 24px 64px rgba(0,0,0,0.3);}
+body.dark .settings-box{background:#252537;}
+.settings-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:20px;}
+body.dark .settings-title{color:#E2E8F0;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.settings-label{font-size:13px;color:#444;font-weight:600;}
+body.dark .settings-label{color:#9CA3AF;}
+.toggle-btn{width:44px;height:24px;background:var(--border);border-radius:12px;position:relative;cursor:pointer;border:none;transition:background 0.2s;}
+.toggle-btn.on{background:var(--green);}
+.toggle-btn::after{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:3px;transition:left 0.2s;}
+.toggle-btn.on::after{left:23px;}
+.settings-input{width:100%;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;color:var(--navy);background:white;outline:none;margin-bottom:8px;}
+body.dark .settings-input{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
+.settings-save{width:100%;height:40px;background:var(--blue);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;}
+.settings-close{width:100%;height:40px;background:var(--bg);color:#555;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;}
+
+/* 투표 */
+.poll-msg{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-top:4px;min-width:200px;}
+body.dark .poll-msg{background:#252537;border-color:#2D2D44;}
+.poll-question{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+body.dark .poll-question{color:#E2E8F0;}
+.poll-option{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);transition:background 0.15s;position:relative;overflow:hidden;}
+.poll-option:hover{background:var(--pale);}
+.poll-option.voted{border-color:var(--mid);}
+.poll-bar{position:absolute;left:0;top:0;bottom:0;background:var(--pale);z-index:0;transition:width 0.3s;}
+body.dark .poll-bar{background:#1E2035;}
+.poll-opt-text{font-size:12px;color:#444;z-index:1;flex:1;}
+body.dark .poll-opt-text{color:#9CA3AF;}
+.poll-opt-pct{font-size:11px;color:var(--mid);font-weight:700;z-index:1;}
+.poll-total{font-size:10px;color:var(--gray);margin-top:6px;}
+
+/* 투표 버튼 */
+#poll-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;}
+#poll-modal.show{display:flex;}
+.poll-box{background:white;border-radius:20px;padding:28px;width:320px;box-shadow:0 24px 64px rgba(0,0,0,0.3);}
+body.dark .poll-box{background:#252537;}
+.poll-box-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px;}
+body.dark .poll-box-title{color:#E2E8F0;}
+.poll-input{width:100%;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:12px;font-family:inherit;color:var(--navy);background:white;outline:none;margin-bottom:8px;}
+body.dark .poll-input{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
+.poll-add-opt{font-size:12px;color:var(--mid);background:none;border:none;cursor:pointer;font-family:inherit;margin-bottom:12px;}
+.poll-submit{width:100%;height:40px;background:var(--blue);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.poll-cancel{width:100%;height:40px;background:var(--bg);color:#555;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;}
+
 .c0{color:#2E5FA3}.c1{color:#1D9E75}.c2{color:#E8A020}.c3{color:#9B59B6}.c4{color:#E24B4A}.c5{color:#0891B2}
 </style>
 </head>
@@ -221,6 +287,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);height:100vh;dis
   <div class="header-right">
     <div class="online-badge"><div class="online-dot"></div><span id="online-count">0명</span></div>
     <button class="hdr-btn" id="search-btn">🔍</button>
+    <button class="hdr-btn" id="poll-btn">📊</button>
+    <button class="hdr-btn" id="settings-btn">⚙️</button>
     <button class="hdr-btn" id="logout-btn">나가기</button>
   </div>
 </div>
@@ -278,6 +346,36 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);height:100vh;dis
 </div>
 
 <div id="new-msg-popup" style="display:none"></div>
+
+<!-- 설정 모달 -->
+<div id="settings-modal">
+  <div class="settings-box">
+    <div class="settings-title">⚙️ 설정</div>
+    <div class="settings-row">
+      <span class="settings-label">🌙 다크모드</span>
+      <button class="toggle-btn" id="dark-toggle"></button>
+    </div>
+    <div class="settings-label" style="margin-bottom:8px">닉네임 변경</div>
+    <input id="nickname-input" class="settings-input" placeholder="새 닉네임 입력" maxlength="10">
+    <button class="settings-save" id="nickname-save">저장</button>
+    <button class="settings-close" id="settings-close">닫기</button>
+  </div>
+</div>
+
+<!-- 투표 모달 -->
+<div id="poll-modal">
+  <div class="poll-box">
+    <div class="poll-box-title">📊 투표 만들기</div>
+    <input id="poll-question" class="poll-input" placeholder="투표 질문 입력">
+    <div id="poll-options-wrap">
+      <input class="poll-input poll-option-input" placeholder="선택지 1">
+      <input class="poll-input poll-option-input" placeholder="선택지 2">
+    </div>
+    <button class="poll-add-opt" id="poll-add-opt">+ 선택지 추가</button>
+    <button class="poll-submit" id="poll-submit">투표 만들기</button>
+    <button class="poll-cancel" id="poll-cancel">취소</button>
+  </div>
+</div>
 <button id="scroll-btn">↓ 새 메시지</button>
 <div id="toast"></div>
 
@@ -539,6 +637,37 @@ function renderMsgs(msgs) {
       prevName = ''; return;
     }
 
+    if (msg.type === 'poll') {
+      var opts = msg.options || {};
+      var totalVotes = 0;
+      Object.keys(opts).forEach(function(k) {
+        totalVotes += Object.keys(opts[k].votes || {}).length;
+      });
+      var pollHtml = '<div class="poll-msg">';
+      pollHtml += '<div class="poll-question">📊 ' + esc(msg.question) + '</div>';
+      Object.keys(opts).forEach(function(k) {
+        var opt = opts[k];
+        var votes = Object.keys(opt.votes || {}).length;
+        var pct = totalVotes > 0 ? Math.round(votes/totalVotes*100) : 0;
+        var voted = opt.votes && opt.votes[myName] ? ' voted' : '';
+        pollHtml += '<div class="poll-option' + voted + '" data-msg-key="' + msg.key + '" data-opt-key="' + k + '">';
+        pollHtml += '<div class="poll-bar" style="width:' + pct + '%"></div>';
+        pollHtml += '<span class="poll-opt-text">' + esc(opt.text) + '</span>';
+        pollHtml += '<span class="poll-opt-pct">' + pct + '%</span>';
+        pollHtml += '</div>';
+      });
+      pollHtml += '<div class="poll-total">총 ' + totalVotes + '표</div></div>';
+
+      var isMe = msg.name === myName;
+      var color = isMe ? '' : getColor(msg.name);
+      html += '<div class="msg-wrap ' + (isMe?'me':'other') + '">';
+      if (msg.name !== prevName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+      html += '<div class="msg-row"><div class="msg-bubble" style="padding:0;background:transparent;border:none;box-shadow:none">' + pollHtml + '</div></div>';
+      html += '</div>';
+      prevName = msg.name;
+      return;
+    }
+
     var isMe = msg.name === myName;
     var d = msg.time ? new Date(msg.time) : new Date();
     var dateStr = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
@@ -600,12 +729,12 @@ function renderMsgs(msgs) {
 
     // 액션
     var actions = '<div class="msg-actions">';
-    actions += '<button class="action-btn" data-action="reply" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">↩️</button>';
-    actions += '<button class="action-btn" data-action="emoji" data-key="' + msg.key + '">😊</button>';
-    if (!msg.deleted) actions += '<button class="action-btn" data-action="copy" data-text="' + esc(msg.text||'') + '">복사</button>';
-    if (!msg.deleted) actions += '<button class="action-btn pin" data-action="pin" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">📌</button>';
+    if (!msg.deleted) actions += '<button class="action-btn pin" data-action="pin" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">📌공지</button>';
     if (isMe && !msg.deleted) actions += '<button class="action-btn" data-action="edit" data-key="' + msg.key + '" data-text="' + esc(msg.text||'') + '">수정</button>';
+    if (!msg.deleted) actions += '<button class="action-btn" data-action="copy" data-text="' + esc(msg.text||'') + '">복사</button>';
     if (isMe && !msg.deleted) actions += '<button class="action-btn del" data-action="del" data-key="' + msg.key + '">삭제</button>';
+    actions += '<button class="action-btn" data-action="emoji" data-key="' + msg.key + '">😊</button>';
+    actions += '<button class="action-btn" data-action="reply" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">↩️</button>';
     actions += '</div>';
 
     html += '<div class="msg-wrap ' + (isMe?'me':'other') + '">';
@@ -663,6 +792,12 @@ function renderMsgs(msgs) {
   box.querySelectorAll('.reaction-pill').forEach(function(pill) {
     pill.addEventListener('click', function() {
       toggleReaction(pill.dataset.key, pill.dataset.emoji);
+    });
+  });
+
+  box.querySelectorAll('.poll-option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      votePoll(opt.dataset.msgKey, opt.dataset.optKey);
     });
   });
 
@@ -902,6 +1037,125 @@ document.getElementById('messages').addEventListener('scroll', function() {
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+}
+
+// ===== 다크모드 =====
+function applyDark(on) {
+  if (on) {
+    document.body.classList.add('dark');
+    document.getElementById('dark-toggle').classList.add('on');
+  } else {
+    document.body.classList.remove('dark');
+    document.getElementById('dark-toggle').classList.remove('on');
+  }
+  localStorage.setItem('gg_dark', on ? '1' : '0');
+}
+
+document.getElementById('dark-toggle').addEventListener('click', function() {
+  var isDark = document.body.classList.contains('dark');
+  applyDark(!isDark);
+});
+
+if (localStorage.getItem('gg_dark') === '1') applyDark(true);
+
+// ===== 설정 모달 =====
+document.getElementById('settings-btn').addEventListener('click', function() {
+  document.getElementById('settings-modal').classList.add('show');
+  document.getElementById('nickname-input').value = myName || '';
+});
+
+document.getElementById('settings-close').addEventListener('click', function() {
+  document.getElementById('settings-modal').classList.remove('show');
+});
+
+document.getElementById('settings-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+// 닉네임 변경
+document.getElementById('nickname-save').addEventListener('click', function() {
+  var newName = document.getElementById('nickname-input').value.trim();
+  if (!newName) { showToast('닉네임을 입력해 주세요!'); return; }
+  if (newName === myName) { document.getElementById('settings-modal').classList.remove('show'); return; }
+
+  var oldName = myName;
+  // 온라인에서 이전 이름 제거
+  set(ref(db, 'online/' + oldName), null);
+  // 퇴장 알림
+  push(ref(db, 'messages'), { type: 'system', text: oldName + '님이 ' + newName + '(으)로 닉네임을 변경했습니다', time: serverTimestamp() });
+
+  myName = newName;
+  localStorage.setItem('gg_chat_name', newName);
+  document.getElementById('header-user').textContent = newName;
+  document.getElementById('nickname-input').value = newName;
+
+  // 새 이름으로 온라인 등록
+  var onRef = ref(db, 'online/' + myName);
+  set(onRef, { name: myName, time: serverTimestamp() });
+  onDisconnect(onRef).remove();
+
+  document.getElementById('settings-modal').classList.remove('show');
+  showToast('닉네임이 변경됐습니다!');
+});
+
+// ===== 투표 기능 =====
+document.getElementById('poll-btn').addEventListener('click', function() {
+  if (!myName) { showToast('먼저 입장해 주세요!'); return; }
+  document.getElementById('poll-modal').classList.add('show');
+});
+
+document.getElementById('poll-cancel').addEventListener('click', function() {
+  document.getElementById('poll-modal').classList.remove('show');
+});
+
+document.getElementById('poll-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+document.getElementById('poll-add-opt').addEventListener('click', function() {
+  var wrap = document.getElementById('poll-options-wrap');
+  var count = wrap.querySelectorAll('.poll-option-input').length + 1;
+  if (count > 5) { showToast('선택지는 최대 5개예요!'); return; }
+  var input = document.createElement('input');
+  input.className = 'poll-input poll-option-input';
+  input.placeholder = '선택지 ' + count;
+  wrap.appendChild(input);
+});
+
+document.getElementById('poll-submit').addEventListener('click', function() {
+  var question = document.getElementById('poll-question').value.trim();
+  if (!question) { showToast('질문을 입력해 주세요!'); return; }
+  var opts = Array.from(document.querySelectorAll('.poll-option-input'))
+    .map(function(el) { return el.value.trim(); })
+    .filter(function(v) { return v; });
+  if (opts.length < 2) { showToast('선택지를 2개 이상 입력해 주세요!'); return; }
+
+  var pollData = {};
+  opts.forEach(function(opt, i) { pollData['opt' + i] = { text: opt, votes: {} }; });
+
+  push(ref(db, getPath()), {
+    name: myName, type: 'poll',
+    question: question, options: pollData,
+    time: serverTimestamp()
+  });
+
+  // 초기화
+  document.getElementById('poll-question').value = '';
+  document.querySelectorAll('.poll-option-input').forEach(function(el, i) {
+    el.value = '';
+    if (i >= 2) el.remove();
+  });
+  document.getElementById('poll-modal').classList.remove('show');
+});
+
+// 투표하기
+function votePoll(msgKey, optKey) {
+  if (!myName) return;
+  var voteRef = ref(db, getPath() + '/' + msgKey + '/options/' + optKey + '/votes/' + myName);
+  onValue(voteRef, function(snap) {
+    if (snap.val()) remove(voteRef);
+    else set(voteRef, true);
+  }, { onlyOnce: true });
 }
 
 // 자동 로그인
