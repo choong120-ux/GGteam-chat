@@ -1130,35 +1130,14 @@ document.getElementById('notif-toggle').addEventListener('click', function() {
 if (localStorage.getItem('gg_notif_off') === '1') applyNotif(true);
 
 // ===== 관리자 모드 =====
-var ADMIN_PW = '161201';
-var isAdmin = localStorage.getItem('gg_admin') === '1';
 
-function applyAdmin(on) {
-  isAdmin = on;
-  var status = document.getElementById('admin-status');
-  if (status) {
-    status.textContent = on ? '활성 👑' : '비활성';
-    status.style.color = on ? '#E8A020' : 'var(--gray)';
-  }
 
-  localStorage.setItem('gg_admin', on ? '1' : '0');
-}
 
-document.getElementById('admin-login-btn').addEventListener('click', function() {
-  var pw = document.getElementById('admin-pw-input').value;
-  if (pw === ADMIN_PW) {
-    applyAdmin(true);
-    document.getElementById('admin-pw-input').value = '';
-    showToast('관리자 모드가 활성화됐습니다! 👑');
-  } else if (pw === '' && isAdmin) {
-    applyAdmin(false);
-    showToast('관리자 모드가 해제됐습니다.');
-  } else {
-    showToast('비밀번호가 틀렸습니다!');
-  }
-});
 
-if (isAdmin) applyAdmin(true);
+
+);
+
+
 
 // ===== 다크모드 =====
 function applyDark(on) {
@@ -1353,7 +1332,13 @@ document.getElementById('settings-btn').addEventListener('click', function() {
 // 헤더 전체 삭제 버튼
 document.getElementById('clear-btn').addEventListener('click', function() {
   if (!confirm('전체 채팅을 삭제할까요? 되돌릴 수 없어요!')) return;
-  remove(ref(db, 'messages'));
+  // 각 메시지 개별 삭제
+  onValue(ref(db, 'messages'), function(snap) {
+    var data = snap.val() || {};
+    Object.keys(data).forEach(function(k) {
+      remove(ref(db, 'messages/' + k));
+    });
+  }, { onlyOnce: true });
   remove(ref(db, 'pinned'));
   showToast('전체 채팅이 삭제됐습니다.');
 });
