@@ -414,6 +414,7 @@ body.dark .paste-info strong{color:#E2E8F0;}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getDatabase, ref, push, onValue, serverTimestamp, set, remove, update, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 const cfg = {
   apiKey: 'AIzaSyDwTyEkLU8zWb9g4SNXABHoc9KAA36RI1U',
@@ -427,6 +428,12 @@ const cfg = {
 
 const app = initializeApp(cfg);
 const db = getDatabase(app);
+const auth = getAuth(app);
+
+// 익명 인증 자동 실행
+signInAnonymously(auth).catch(function(e) {
+  console.log('인증 실패:', e);
+});
 const EMOJIS = ['👍','❤️','😂','😮','😢','🔥'];
 
 let myName = '', currentTab = 'all', dmTarget = '';
