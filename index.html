@@ -297,7 +297,7 @@ body.dark .slash-item:hover{background:#1E2035;}
 .slash-result{background:white;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:4px 0;align-self:flex-start;max-width:80%;}
 body.dark .slash-result{background:#252537;border-color:#2D2D44;}
 .slash-result-title{font-size:11px;font-weight:700;color:var(--mid);margin-bottom:8px;}
-.slash-result-item{font-size:12px;color:var(--navy);padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;}
+.slash-result-item{font-size:12px;color:var(--navy);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
 body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
 .slash-result-item:last-child{border-bottom:none;}
 .slash-result-name{font-weight:600;flex:1;}
@@ -1053,7 +1053,7 @@ function checkSlash(el) {
   var before = text.slice(0, pos);
 
   // /로 시작하는지 확인
-  var slashMatch = before.match(/^\/(\S*)$/);
+  var slashMatch = before.match(/^\/([\S]*)$/);
   if (!slashMatch) { closeSlashPopup(); return false; }
 
   var query = slashMatch[1].toLowerCase();
@@ -1125,7 +1125,7 @@ function searchHospitalFromFirebase(keyword) {
              (h.division && h.division.toLowerCase().includes(kw));
     });
     showSlashResult('🏥 ' + keyword + ' 검색 결과', results.map(function(h) {
-      return { name: h.name + (h.division ? ' (' + h.division + ')' : ''), phone: h.phone, note: h.note };
+      return { name: (h.category ? '[' + h.category + '] ' : '') + h.name + (h.division ? ' (' + h.division + ')' : ''), phone: h.phone, note: h.note };
     }));
   }, { onlyOnce: true });
 }
@@ -1139,7 +1139,7 @@ function showSlashResult(title, items) {
     html += '<div class="slash-result-empty">검색 결과가 없습니다</div>';
   } else {
     items.forEach(function(item) {
-      html += '<div class="slash-result-item"><span class="slash-result-name">' + esc(item.name) + '</span><span class="slash-result-phone">' + esc(item.phone||'') + '</span></div>';
+      html += '<div class="slash-result-item"><span class="slash-result-name">' + esc(item.name) + '</span><span class="slash-result-phone" style="cursor:pointer" title="클릭하면 복사" onclick="navigator.clipboard.writeText(\'' + (item.phone||'').replace(/'/g,\'\') + '\').then(function(){showToast(\'전화번호가 복사됐습니다!\');})">' + esc(item.phone||'') + '</span></div>';
     });
   }
   div.innerHTML = html;
