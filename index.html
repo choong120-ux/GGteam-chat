@@ -719,16 +719,9 @@ function renderMsgs(msgs) {
       if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row">';
       html += '<div class="msg-bubble" style="padding:4px">';
-      var imgEl = document.createElement('img');
-      imgEl.src = msg.imageData || '';
-      imgEl.className = 'msg-image';
-      imgEl.style.margin = '0';
-      imgEl.style.maxWidth = '220px';
-      imgEl.style.maxHeight = '200px';
-      imgEl.setAttribute('onclick', 'openImgModal(this.src)');
-      html += imgEl.outerHTML;
+      html += '<img class="msg-image chat-img" style="margin:0;max-width:220px;max-height:200px;cursor:zoom-in" data-imgsrc="' + (msg.key||'') + '">';
       html += '</div>';
-      if (!isContinuous) html += '<div class="msg-time">' + timeStr + '</div>';
+      html += '<div class="msg-time">' + timeStr + '</div>';
       html += '</div></div>';
       prevName = msg.name;
       return;
@@ -796,12 +789,7 @@ function renderMsgs(msgs) {
     if (msg.text && !msg.deleted) {
       var imgMatch = msg.text.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/i);
       if (imgMatch) {
-        var imgEl = document.createElement('img');
-        imgEl.src = imgMatch[0];
-        imgEl.className = 'msg-image';
-        imgEl.setAttribute('onerror', "this.style.display='none'");
-        imgEl.setAttribute('onclick', "openImgModal('" + imgMatch[0] + "')");
-        imgHtml = imgEl.outerHTML;
+        imgHtml = '<img class="msg-image chat-img" style="cursor:zoom-in" src="' + imgMatch[0] + '" data-imgsrc="url" onerror="this.style.display='none'">';
       }
     }
 
@@ -840,7 +828,7 @@ function renderMsgs(msgs) {
     html += '<div class="msg-row">';
     if (isMe) html += readHtml;
     html += '<div class="msg-bubble" id="bb-' + msg.key + '">' + replyHtml + content + editedTag + imgHtml + '</div>';
-    if (!isContinuous) html += '<div class="msg-time">' + timeStr + '</div>';
+    html += '<div class="msg-time">' + timeStr + '</div>';
     if (!isMe) html += readHtml;
     html += '</div>';
     if (reactHtml) html += reactHtml;
@@ -857,6 +845,26 @@ function renderMsgs(msgs) {
     if (el) {
       var others = onlineUsers.length - 1;
       el.textContent = others > 0 ? others : '';
+    }
+  });
+
+  // 이미지 클릭 - 확대 보기
+  box.querySelectorAll('.chat-img').forEach(function(img) {
+    img.addEventListener('click', function() {
+      var src = this.src || this.getAttribute('src');
+      if (src) {
+        document.getElementById('img-modal-img').src = src;
+        document.getElementById('img-modal').classList.add('show');
+      }
+    });
+  });
+
+  // 업로드 이미지 - base64 데이터 별도 저장
+  box.querySelectorAll('[data-imgsrc]').forEach(function(img) {
+    var key = img.getAttribute('data-imgsrc');
+    if (key && key !== 'url' && allMsgs) {
+      var msg = allMsgs.find(function(m) { return m.key === key; });
+      if (msg && msg.imageData) img.src = msg.imageData;
     }
   });
 
