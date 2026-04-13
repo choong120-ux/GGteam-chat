@@ -1209,8 +1209,7 @@ document.getElementById('msg-input').addEventListener('keydown', function(e) {
   if(e.ctrlKey && e.key === 'Enter') {
     e.preventDefault();
     var pos = this.selectionStart;
-    this.value = this.value.slice(0,pos) + '
-' + this.value.slice(pos);
+    this.value = this.value.slice(0,pos) + '\n' + this.value.slice(pos);
     this.selectionStart = this.selectionEnd = pos+1;
     autoResize(this);
   }
