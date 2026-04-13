@@ -644,7 +644,7 @@ function renderMsgs(msgs){
       var processed = processText(msg.text||'');
       if((msg.text||'').length > 100) {
         content = '<span class="msg-text-collapsed" id="mtc-'+msg.key+'">'+processed+'</span>'
-          + '<button class="more-btn" data-key="'+msg.key+'" data-action="more">더보기</button>';
+          + '<button class="more-btn" data-morekey="'+msg.key+'">더보기</button>';
       } else {
         content = processed;
       }
@@ -726,9 +726,9 @@ function renderMsgs(msgs){
 
   box.querySelectorAll('.reaction-pill').forEach(function(pill){ pill.addEventListener('click', function(){ toggleReaction(pill.dataset.key, pill.dataset.emoji); }); });
 
-  box.querySelectorAll('[data-action="more"]').forEach(function(btn){
+  box.querySelectorAll('[data-morekey]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var key = btn.dataset.key;
+      var key = btn.dataset.morekey;
       var span = document.getElementById('mtc-'+key);
       if(!span) return;
       if(span.classList.contains('msg-text-collapsed')){
