@@ -76,7 +76,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);height:100vh;dis
 .msg-wrap.me .msg-bubble{background:var(--blue);color:white;border-radius:18px 4px 18px 18px;}
 .msg-wrap.other .msg-bubble{background:white;color:#1E293B;border-radius:4px 18px 18px 18px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.06);}
 .msg-time{font-size:10px;color:var(--gray);white-space:nowrap;margin-bottom:2px;}
-.read-count{font-size:10px;color:var(--gray);margin-bottom:2px;}
+.read-count{display:none;}
 .edited-tag{font-size:10px;color:rgba(255,255,255,0.5);margin-left:4px;}
 .msg-wrap.other .edited-tag{color:var(--gray);}
 .deleted-msg{font-size:12px;color:var(--gray);font-style:italic;}
@@ -771,7 +771,7 @@ function renderMsgs(msgs){
     }
 
     var editedTag=msg.edited?'<span class="edited-tag">(수정됨)</span>':'';
-    var readHtml=isMe?'<div class="read-count" id="rd-'+msg.key+'"></div>':'';
+    var readHtml='';
     var replyHtml='';
     if(msg.replyTo) replyHtml='<div class="reply-preview"><div class="reply-name">'+esc(msg.replyTo.name)+'</div><div class="reply-text">'+esc((msg.replyTo.text||'').slice(0,40))+'</div></div>';
 
@@ -821,8 +821,7 @@ function renderMsgs(msgs){
     });
   });
 
-  // 읽음 표시
-  msgs.forEach(function(msg){ if(msg.name!==myName) return; var el=document.getElementById('rd-'+msg.key); if(el) el.textContent=onlineUsers.length>1?onlineUsers.length-1:''; });
+
 
   // 이벤트 위임
   box.querySelectorAll('[data-action]').forEach(function(btn){
