@@ -698,6 +698,8 @@ function renderMsgs(msgs) {
   var html = '', lastDate = '', prevName = '';
 
   msgs.forEach(function(msg) {
+    var isContinuous = msg.name === prevName;
+
     if (msg.type === 'system') {
       html += '<div class="system-msg">' + esc(msg.text) + '</div>';
       prevName = ''; return;
@@ -711,21 +713,36 @@ function renderMsgs(msgs) {
       var timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
       if (dateStr !== lastDate) {
         html += '<div class="date-divider">' + dateStr + '</div>';
-        lastDate = dateStr; prevName = '';
+        lastDate = dateStr; prevName = ''; isContinuous = false;
       }
-      html += '<div class="msg-wrap ' + (isMe ? 'me' : 'other') + '">';
-      if (!isMe && msg.name !== prevName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+      html += '<div class="msg-wrap ' + (isMe ? 'me' : 'other') + (isContinuous ? ' continuous' : '') + '">';
+      if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row">';
       html += '<div class="msg-bubble" style="padding:4px">';
-      var img = new Image(); img.src = msg.imageData || ''; img.className = 'msg-image'; img.style.margin = '0'; img.style.maxWidth = '220px'; img.style.maxHeight = '200px'; html += img.outerHTML;
+      var imgEl = document.createElement('img');
+      imgEl.src = msg.imageData || '';
+      imgEl.className = 'msg-image';
+      imgEl.style.margin = '0';
+      imgEl.style.maxWidth = '220px';
+      imgEl.style.maxHeight = '200px';
+      imgEl.setAttribute('onclick', 'openImgModal(this.src)');
+      html += imgEl.outerHTML;
       html += '</div>';
-      html += isContinuous ? '' : '<div class="msg-time">' + timeStr + '</div>';
+      if (!isContinuous) html += '<div class="msg-time">' + timeStr + '</div>';
       html += '</div></div>';
       prevName = msg.name;
       return;
     }
 
     if (msg.type === 'poll') {
+      var isMe = msg.name === myName;
+      var color = isMe ? '' : getColor(msg.name);
+      var d = msg.time ? new Date(msg.time) : new Date();
+      var dateStr = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+      if (dateStr !== lastDate) {
+        html += '<div class="date-divider">' + dateStr + '</div>';
+        lastDate = dateStr; prevName = ''; isContinuous = false;
+      }
       var opts = msg.options || {};
       var totalVotes = 0;
       Object.keys(opts).forEach(function(k) {
@@ -745,11 +762,8 @@ function renderMsgs(msgs) {
         pollHtml += '</div>';
       });
       pollHtml += '<div class="poll-total">총 ' + totalVotes + '표</div></div>';
-
-      var isMe = msg.name === myName;
-      var color = isMe ? '' : getColor(msg.name);
       html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
-      if (msg.name !== prevName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+      if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row"><div class="msg-bubble" style="padding:0;background:transparent;border:none;box-shadow:none">' + pollHtml + '</div></div>';
       html += '</div>';
       prevName = msg.name;
@@ -763,14 +777,12 @@ function renderMsgs(msgs) {
 
     if (dateStr !== lastDate) {
       html += '<div class="date-divider">' + dateStr + '</div>';
-      lastDate = dateStr; prevName = '';
+      lastDate = dateStr; prevName = ''; isContinuous = false;
     }
 
-    var isContinuous = msg.name === prevName;
     var showName = !isMe && !isContinuous;
     var color = isMe ? '' : getColor(msg.name);
 
-    // 내용
     var content = '';
     if (msg.deleted) {
       content = '<span class="deleted-msg">삭제된 메시지입니다</span>';
@@ -780,7 +792,6 @@ function renderMsgs(msgs) {
       content = processText(msg.text || '');
     }
 
-    // 이미지 감지
     var imgHtml = '';
     if (msg.text && !msg.deleted) {
       var imgMatch = msg.text.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/i);
@@ -797,13 +808,11 @@ function renderMsgs(msgs) {
     var editedTag = msg.edited ? '<span class="edited-tag">(수정됨)</span>' : '';
     var readHtml = isMe ? '<div class="read-count" id="rd-' + msg.key + '"></div>' : '';
 
-    // 답장
     var replyHtml = '';
     if (msg.replyTo) {
       replyHtml = '<div class="reply-preview"><div class="reply-name">' + esc(msg.replyTo.name) + '</div><div class="reply-text">' + esc((msg.replyTo.text||'').slice(0,40)) + '</div></div>';
     }
 
-    // 반응
     var reactHtml = '';
     if (msg.reactions) {
       reactHtml = '<div class="reactions">';
@@ -816,7 +825,6 @@ function renderMsgs(msgs) {
       reactHtml += '</div>';
     }
 
-    // 액션
     var actions = '<div class="msg-actions">';
     if (!msg.deleted) actions += '<button class="action-btn pin" data-action="pin" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">📌공지</button>';
     if (isMe && !msg.deleted) actions += '<button class="action-btn" data-action="edit" data-key="' + msg.key + '" data-text="' + esc(msg.text||'') + '">수정</button>';
@@ -832,7 +840,7 @@ function renderMsgs(msgs) {
     html += '<div class="msg-row">';
     if (isMe) html += readHtml;
     html += '<div class="msg-bubble" id="bb-' + msg.key + '">' + replyHtml + content + editedTag + imgHtml + '</div>';
-    html += '<div class="msg-time">' + timeStr + '</div>';
+    if (!isContinuous) html += '<div class="msg-time">' + timeStr + '</div>';
     if (!isMe) html += readHtml;
     html += '</div>';
     if (reactHtml) html += reactHtml;
@@ -843,7 +851,6 @@ function renderMsgs(msgs) {
 
   box.innerHTML = html;
 
-  // 읽음 표시
   msgs.forEach(function(msg) {
     if (msg.name !== myName) return;
     var el = document.getElementById('rd-' + msg.key);
@@ -853,7 +860,6 @@ function renderMsgs(msgs) {
     }
   });
 
-  // 이벤트 위임
   box.querySelectorAll('[data-action]').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -892,6 +898,7 @@ function renderMsgs(msgs) {
 
   if (atBottom) box.scrollTop = box.scrollHeight;
 }
+
 
 // 공지 렌더링
 function renderNotices(msgs) {
