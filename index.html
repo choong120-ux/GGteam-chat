@@ -766,7 +766,7 @@ function renderMsgs(msgs) {
     if (msg.text && !msg.deleted) {
       var imgMatch = msg.text.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/i);
       if (imgMatch) {
-        imgHtml = '<img class="msg-image chat-img" src="' + imgMatch[0] + '" data-imgurl="' + imgMatch[0] + '" style="cursor:zoom-in" onerror="this.style.display='none'">';
+        imgHtml = '<img class="msg-image chat-img" src="' + imgMatch[0] + '" data-imgurl="' + imgMatch[0] + '" style="cursor:zoom-in">';
       }
     }
 
