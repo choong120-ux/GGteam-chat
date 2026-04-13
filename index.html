@@ -251,6 +251,11 @@ body.dark .poll-opt-text{color:#9CA3AF;}
 body.dark .poll-bar{background:#1E2035;}
 body.dark .reaction-pill{background:#252537;border-color:#2D2D44;}
 
+.font-size-btn{font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:8px;background:white;color:#555;cursor:pointer;font-family:inherit;}
+.font-size-btn:hover{background:var(--bg);}
+.font-size-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
+body.dark .font-size-btn{background:#252537;color:#9CA3AF;border-color:#2D2D44;}
+body.dark .font-size-btn.active{background:var(--blue);color:white;}
 .c0{color:#2E5FA3}.c1{color:#1D9E75}.c2{color:#E8A020}.c3{color:#9B59B6}.c4{color:#E24B4A}.c5{color:#0891B2}
 
 .msg-text-collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
@@ -385,6 +390,14 @@ body.dark .reaction-pill{background:#252537;border-color:#2D2D44;}
     <div class="settings-row">
       <span class="settings-label">🔕 알림 끄기</span>
       <button class="toggle-btn" id="notif-toggle"></button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">🔤 폰트 크기</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="font-size-btn" id="font-small">작게</button>
+        <span id="font-size-label" style="font-size:12px;color:var(--gray);min-width:28px;text-align:center">보통</span>
+        <button class="font-size-btn" id="font-large">크게</button>
+      </div>
     </div>
     <div class="settings-label" style="margin-bottom:8px">닉네임 변경</div>
     <input id="nickname-input" class="settings-input" placeholder="새 닉네임 입력" maxlength="10">
@@ -743,6 +756,7 @@ function renderMsgs(msgs){
   box.querySelectorAll('.poll-option').forEach(function(opt){ opt.addEventListener('click', function(){ votePoll(opt.dataset.msgKey, opt.dataset.optKey); }); });
 
   if(atBottom) box.scrollTop=box.scrollHeight;
+  applyFontToMsgs();
 }
 
 // 공지 렌더링
@@ -931,6 +945,31 @@ function sendBrowserNotif(name, text){
 function applyDark(on){ if(on){ document.body.classList.add('dark'); document.getElementById('dark-toggle').classList.add('on'); } else { document.body.classList.remove('dark'); document.getElementById('dark-toggle').classList.remove('on'); } localStorage.setItem('gg_dark',on?'1':'0'); }
 document.getElementById('dark-toggle').addEventListener('click', function(){ applyDark(!document.body.classList.contains('dark')); });
 if(localStorage.getItem('gg_dark')==='1') applyDark(true);
+
+// 폰트 크기
+var fontSizes = { small: '11px', normal: '13px', large: '15px' };
+var fontLabels = { small: '작게', normal: '보통', large: '크게' };
+var currentFont = localStorage.getItem('gg_font') || 'normal';
+
+function applyFont(size) {
+  currentFont = size;
+  var msgBubbles = document.querySelector('.msg-bubble');
+  document.querySelectorAll('.msg-bubble').forEach(function(el){ el.style.fontSize = fontSizes[size]; });
+  document.getElementById('msg-input').style.fontSize = fontSizes[size];
+  document.getElementById('font-size-label').textContent = fontLabels[size];
+  document.querySelectorAll('.font-size-btn').forEach(function(btn){ btn.classList.remove('active'); });
+  if(size==='small') document.getElementById('font-small').classList.add('active');
+  else if(size==='large') document.getElementById('font-large').classList.add('active');
+  localStorage.setItem('gg_font', size);
+}
+
+document.getElementById('font-small').addEventListener('click', function(){ applyFont('small'); });
+document.getElementById('font-large').addEventListener('click', function(){ applyFont('large'); });
+
+// 렌더 후 폰트 적용
+function applyFontToMsgs(){ document.querySelectorAll('.msg-bubble').forEach(function(el){ el.style.fontSize=fontSizes[currentFont]; }); }
+
+if(currentFont!=='normal') applyFont(currentFont);
 
 // 알림 끄기
 function applyNotif(off){ notifOff=off; var btn=document.getElementById('notif-toggle'); if(off) btn.classList.add('on'); else btn.classList.remove('on'); localStorage.setItem('gg_notif_off',off?'1':'0'); }
