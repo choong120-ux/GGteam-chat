@@ -440,7 +440,7 @@ body.dark .font-size-btn.active{background:var(--blue);color:white;}
   <div class="schedule-box">
     <div class="schedule-title">⏰ 메시지 예약</div>
     <textarea id="schedule-text" class="schedule-input" placeholder="예약할 메시지 입력"></textarea>
-    <input id="schedule-time" class="schedule-time" type="datetime-local">
+    <input id="schedule-time" class="schedule-time" type="datetime-local" style="cursor:pointer">
     <button class="schedule-submit" id="schedule-submit">예약하기</button>
     <button class="schedule-cancel" id="schedule-cancel">취소</button>
   </div>
@@ -1065,7 +1065,10 @@ document.getElementById('schedule-btn').addEventListener('click', function(){
   if(!myName){ showToast('먼저 입장해 주세요!'); return; }
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('schedule-time').value = now.toISOString().slice(0,16);
+  var minVal = now.toISOString().slice(0,16);
+  var el = document.getElementById('schedule-time');
+  el.min = minVal;
+  el.value = '';
   document.getElementById('schedule-modal').classList.add('show');
 });
 
