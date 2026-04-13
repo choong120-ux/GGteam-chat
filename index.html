@@ -440,7 +440,10 @@ body.dark .font-size-btn.active{background:var(--blue);color:white;}
   <div class="schedule-box">
     <div class="schedule-title">⏰ 메시지 예약</div>
     <textarea id="schedule-text" class="schedule-input" placeholder="예약할 메시지 입력"></textarea>
-    <input id="schedule-time" class="schedule-time" type="datetime-local" style="cursor:pointer">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+  <input id="schedule-date" type="date" style="flex:1;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit;color:var(--navy);background:white;outline:none;">
+  <input id="schedule-time-only" type="time" style="flex:1;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;font-family:inherit;color:var(--navy);background:white;outline:none;">
+</div>
     <button class="schedule-submit" id="schedule-submit">예약하기</button>
     <button class="schedule-cancel" id="schedule-cancel">취소</button>
   </div>
@@ -1064,11 +1067,14 @@ setInterval(checkScheduled, 10000);
 document.getElementById('schedule-btn').addEventListener('click', function(){
   if(!myName){ showToast('먼저 입장해 주세요!'); return; }
   var now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  var minVal = now.toISOString().slice(0,16);
-  var el = document.getElementById('schedule-time');
-  el.min = minVal;
-  el.value = '';
+  var yyyy = now.getFullYear();
+  var mm = pad(now.getMonth()+1);
+  var dd = pad(now.getDate());
+  var hh = pad(now.getHours());
+  var mi = pad(now.getMinutes());
+  document.getElementById('schedule-date').value = yyyy+'-'+mm+'-'+dd;
+  document.getElementById('schedule-date').min = yyyy+'-'+mm+'-'+dd;
+  document.getElementById('schedule-time-only').value = hh+':'+mi;
   document.getElementById('schedule-modal').classList.add('show');
 });
 
@@ -1077,7 +1083,9 @@ document.getElementById('schedule-modal').addEventListener('click', function(e){
 
 document.getElementById('schedule-submit').addEventListener('click', function(){
   var text = document.getElementById('schedule-text').value.trim();
-  var timeVal = document.getElementById('schedule-time').value;
+  var dateVal = document.getElementById('schedule-date').value;
+  var timeOnlyVal = document.getElementById('schedule-time-only').value;
+  var timeVal = dateVal && timeOnlyVal ? dateVal+'T'+timeOnlyVal : '';
   if(!text){ showToast('메시지를 입력해 주세요!'); return; }
   if(!timeVal){ showToast('시간을 선택해 주세요!'); return; }
   var sendAt = new Date(timeVal).getTime();
