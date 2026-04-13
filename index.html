@@ -696,74 +696,20 @@ function renderMsgs(msgs) {
   }
 
   var html = '', lastDate = '', prevName = '';
+  var realMsgs = msgs.filter(function(m) { return m.type !== 'system'; });
 
-  msgs.forEach(function(msg) {
-    var isContinuous = msg.name === prevName;
+  msgs.forEach(function(msg, idx) {
+    var nextMsg = msgs[idx + 1];
+    var isLastInGroup = !nextMsg || nextMsg.name !== msg.name || nextMsg.type === 'system';
+    var isContinuous = msg.name === prevName && msg.type !== 'system';
 
     if (msg.type === 'system') {
       html += '<div class="system-msg">' + esc(msg.text) + '</div>';
       prevName = ''; return;
     }
 
-    if (msg.type === 'image') {
-      var isMe = msg.name === myName;
-      var color = isMe ? '' : getColor(msg.name);
-      var d = msg.time ? new Date(msg.time) : new Date();
-      var dateStr = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
-      var timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
-      if (dateStr !== lastDate) {
-        html += '<div class="date-divider">' + dateStr + '</div>';
-        lastDate = dateStr; prevName = ''; isContinuous = false;
-      }
-      html += '<div class="msg-wrap ' + (isMe ? 'me' : 'other') + (isContinuous ? ' continuous' : '') + '">';
-      if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
-      html += '<div class="msg-row">';
-      html += '<div class="msg-bubble" style="padding:4px">';
-      html += '<img class="msg-image chat-img" style="margin:0;max-width:220px;max-height:200px;cursor:zoom-in" data-imgsrc="' + (msg.key||'') + '">';
-      html += '</div>';
-      html += '<div class="msg-time">' + timeStr + '</div>';
-      html += '</div></div>';
-      prevName = msg.name;
-      return;
-    }
-
-    if (msg.type === 'poll') {
-      var isMe = msg.name === myName;
-      var color = isMe ? '' : getColor(msg.name);
-      var d = msg.time ? new Date(msg.time) : new Date();
-      var dateStr = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
-      if (dateStr !== lastDate) {
-        html += '<div class="date-divider">' + dateStr + '</div>';
-        lastDate = dateStr; prevName = ''; isContinuous = false;
-      }
-      var opts = msg.options || {};
-      var totalVotes = 0;
-      Object.keys(opts).forEach(function(k) {
-        totalVotes += Object.keys(opts[k].votes || {}).length;
-      });
-      var pollHtml = '<div class="poll-msg">';
-      pollHtml += '<div class="poll-question">📊 ' + esc(msg.question) + '</div>';
-      Object.keys(opts).forEach(function(k) {
-        var opt = opts[k];
-        var votes = Object.keys(opt.votes || {}).length;
-        var pct = totalVotes > 0 ? Math.round(votes/totalVotes*100) : 0;
-        var voted = opt.votes && opt.votes[myName] ? ' voted' : '';
-        pollHtml += '<div class="poll-option' + voted + '" data-msg-key="' + msg.key + '" data-opt-key="' + k + '">';
-        pollHtml += '<div class="poll-bar" style="width:' + pct + '%"></div>';
-        pollHtml += '<span class="poll-opt-text">' + esc(opt.text) + '</span>';
-        pollHtml += '<span class="poll-opt-pct">' + pct + '%</span>';
-        pollHtml += '</div>';
-      });
-      pollHtml += '<div class="poll-total">총 ' + totalVotes + '표</div></div>';
-      html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
-      if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
-      html += '<div class="msg-row"><div class="msg-bubble" style="padding:0;background:transparent;border:none;box-shadow:none">' + pollHtml + '</div></div>';
-      html += '</div>';
-      prevName = msg.name;
-      return;
-    }
-
     var isMe = msg.name === myName;
+    var color = isMe ? '' : getColor(msg.name);
     var d = msg.time ? new Date(msg.time) : new Date();
     var dateStr = (d.getMonth()+1) + '월 ' + d.getDate() + '일';
     var timeStr = pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -773,8 +719,39 @@ function renderMsgs(msgs) {
       lastDate = dateStr; prevName = ''; isContinuous = false;
     }
 
-    var showName = !isMe && !isContinuous;
-    var color = isMe ? '' : getColor(msg.name);
+    if (msg.type === 'image') {
+      html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
+      if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+      html += '<div class="msg-row">';
+      if (isMe && isLastInGroup) html += '<div class="msg-time">' + timeStr + '</div>';
+      html += '<div class="msg-bubble" style="padding:4px"><img class="msg-image chat-img" data-imgkey="' + msg.key + '" style="margin:0;max-width:220px;max-height:200px;cursor:zoom-in"></div>';
+      if (!isMe && isLastInGroup) html += '<div class="msg-time">' + timeStr + '</div>';
+      html += '</div></div>';
+      prevName = msg.name; return;
+    }
+
+    if (msg.type === 'poll') {
+      var opts = msg.options || {};
+      var totalVotes = 0;
+      Object.keys(opts).forEach(function(k) { totalVotes += Object.keys(opts[k].votes || {}).length; });
+      var pollHtml = '<div class="poll-msg"><div class="poll-question">📊 ' + esc(msg.question) + '</div>';
+      Object.keys(opts).forEach(function(k) {
+        var opt = opts[k];
+        var votes = Object.keys(opt.votes || {}).length;
+        var pct = totalVotes > 0 ? Math.round(votes/totalVotes*100) : 0;
+        var voted = opt.votes && opt.votes[myName] ? ' voted' : '';
+        pollHtml += '<div class="poll-option' + voted + '" data-msg-key="' + msg.key + '" data-opt-key="' + k + '"><div class="poll-bar" style="width:' + pct + '%"></div><span class="poll-opt-text">' + esc(opt.text) + '</span><span class="poll-opt-pct">' + pct + '%</span></div>';
+      });
+      pollHtml += '<div class="poll-total">총 ' + totalVotes + '표</div></div>';
+      html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
+      if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+      html += '<div class="msg-row">';
+      if (isMe && isLastInGroup) html += '<div class="msg-time">' + timeStr + '</div>';
+      html += '<div class="msg-bubble" style="padding:0;background:transparent;border:none;box-shadow:none">' + pollHtml + '</div>';
+      if (!isMe && isLastInGroup) html += '<div class="msg-time">' + timeStr + '</div>';
+      html += '</div></div>';
+      prevName = msg.name; return;
+    }
 
     var content = '';
     if (msg.deleted) {
@@ -789,13 +766,12 @@ function renderMsgs(msgs) {
     if (msg.text && !msg.deleted) {
       var imgMatch = msg.text.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/i);
       if (imgMatch) {
-        imgHtml = '<img class="msg-image chat-img" style="cursor:zoom-in" src="' + imgMatch[0] + '" data-imgsrc="url" onerror="this.style.display='none'">';
+        imgHtml = '<img class="msg-image chat-img" src="' + imgMatch[0] + '" data-imgurl="' + imgMatch[0] + '" style="cursor:zoom-in" onerror="this.style.display='none'">';
       }
     }
 
     var editedTag = msg.edited ? '<span class="edited-tag">(수정됨)</span>' : '';
     var readHtml = isMe ? '<div class="read-count" id="rd-' + msg.key + '"></div>' : '';
-
     var replyHtml = '';
     if (msg.replyTo) {
       replyHtml = '<div class="reply-preview"><div class="reply-name">' + esc(msg.replyTo.name) + '</div><div class="reply-text">' + esc((msg.replyTo.text||'').slice(0,40)) + '</div></div>';
@@ -823,12 +799,12 @@ function renderMsgs(msgs) {
     actions += '</div>';
 
     html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
-    if (showName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
+    if (!isMe && !isContinuous) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
     html += actions;
     html += '<div class="msg-row">';
     if (isMe) html += readHtml;
     html += '<div class="msg-bubble" id="bb-' + msg.key + '">' + replyHtml + content + editedTag + imgHtml + '</div>';
-    html += '<div class="msg-time">' + timeStr + '</div>';
+    if (isLastInGroup) html += '<div class="msg-time">' + timeStr + '</div>';
     if (!isMe) html += readHtml;
     html += '</div>';
     if (reactHtml) html += reactHtml;
@@ -839,69 +815,47 @@ function renderMsgs(msgs) {
 
   box.innerHTML = html;
 
-  msgs.forEach(function(msg) {
-    if (msg.name !== myName) return;
-    var el = document.getElementById('rd-' + msg.key);
-    if (el) {
-      var others = onlineUsers.length - 1;
-      el.textContent = others > 0 ? others : '';
-    }
-  });
-
-  // 이미지 클릭 - 확대 보기
+  // 업로드 이미지 src 설정 + 클릭 이벤트
   box.querySelectorAll('.chat-img').forEach(function(img) {
+    var key = img.getAttribute('data-imgkey');
+    if (key) {
+      var found = allMsgs.find(function(m) { return m.key === key; });
+      if (found && found.imageData) img.src = found.imageData;
+    }
     img.addEventListener('click', function() {
-      var src = this.src || this.getAttribute('src');
-      if (src) {
+      var src = this.src;
+      if (src && src !== window.location.href) {
         document.getElementById('img-modal-img').src = src;
         document.getElementById('img-modal').classList.add('show');
       }
     });
   });
 
-  // 업로드 이미지 - base64 데이터 별도 저장
-  box.querySelectorAll('[data-imgsrc]').forEach(function(img) {
-    var key = img.getAttribute('data-imgsrc');
-    if (key && key !== 'url' && allMsgs) {
-      var msg = allMsgs.find(function(m) { return m.key === key; });
-      if (msg && msg.imageData) img.src = msg.imageData;
-    }
+  msgs.forEach(function(msg) {
+    if (msg.name !== myName) return;
+    var el = document.getElementById('rd-' + msg.key);
+    if (el) { el.textContent = onlineUsers.length > 1 ? onlineUsers.length - 1 : ''; }
   });
 
   box.querySelectorAll('[data-action]').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
-      var action = btn.dataset.action;
-      var key = btn.dataset.key;
-      if (action === 'reply') {
-        setReply(key, btn.dataset.name, btn.dataset.text);
-      } else if (action === 'emoji') {
-        showEmojiPicker(key, btn);
-      } else if (action === 'copy') {
-        navigator.clipboard.writeText(btn.dataset.text).then(function() { showToast('복사됐습니다!'); });
-      } else if (action === 'pin') {
-        set(ref(db, 'pinned'), { key: key, text: btn.dataset.text, name: btn.dataset.name, time: serverTimestamp() });
-        showToast('공지로 고정됐습니다!');
-      } else if (action === 'edit') {
-        startEdit(key, btn.dataset.text);
-      } else if (action === 'del') {
-        if (confirm('이 메시지를 삭제할까요?')) {
-          update(ref(db, getPath() + '/' + key), { text: null, deleted: true });
-        }
-      }
+      var action = btn.dataset.action, key = btn.dataset.key;
+      if (action === 'reply') { setReply(key, btn.dataset.name, btn.dataset.text); }
+      else if (action === 'emoji') { showEmojiPicker(key, btn); }
+      else if (action === 'copy') { navigator.clipboard.writeText(btn.dataset.text).then(function() { showToast('복사됐습니다!'); }); }
+      else if (action === 'pin') { set(ref(db, 'pinned'), { key: key, text: btn.dataset.text, name: btn.dataset.name, time: serverTimestamp() }); showToast('공지로 고정됐습니다!'); }
+      else if (action === 'edit') { startEdit(key, btn.dataset.text); }
+      else if (action === 'del') { if (confirm('이 메시지를 삭제할까요?')) { update(ref(db, getPath() + '/' + key), { text: null, deleted: true }); } }
     });
   });
 
   box.querySelectorAll('.reaction-pill').forEach(function(pill) {
-    pill.addEventListener('click', function() {
-      toggleReaction(pill.dataset.key, pill.dataset.emoji);
-    });
+    pill.addEventListener('click', function() { toggleReaction(pill.dataset.key, pill.dataset.emoji); });
   });
 
   box.querySelectorAll('.poll-option').forEach(function(opt) {
-    opt.addEventListener('click', function() {
-      votePoll(opt.dataset.msgKey, opt.dataset.optKey);
-    });
+    opt.addEventListener('click', function() { votePoll(opt.dataset.msgKey, opt.dataset.optKey); });
   });
 
   if (atBottom) box.scrollTop = box.scrollHeight;
