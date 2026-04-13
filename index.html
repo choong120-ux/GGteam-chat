@@ -251,6 +251,19 @@ body.dark .poll-opt-text{color:#9CA3AF;}
 body.dark .poll-bar{background:#1E2035;}
 body.dark .reaction-pill{background:#252537;border-color:#2D2D44;}
 
+#schedule-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;}
+#schedule-modal.show{display:flex;}
+.schedule-box{background:white;border-radius:20px;padding:28px;width:320px;box-shadow:0 24px 64px rgba(0,0,0,0.3);}
+.schedule-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px;}
+.schedule-input{width:100%;height:80px;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--navy);background:white;outline:none;resize:none;margin-bottom:8px;}
+.schedule-time{width:100%;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;color:var(--navy);background:white;outline:none;margin-bottom:12px;}
+.schedule-submit{width:100%;height:40px;background:var(--blue);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.schedule-cancel{width:100%;height:40px;background:var(--bg);color:#555;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;}
+body.dark .schedule-box{background:#252537;}
+body.dark .schedule-title{color:#E2E8F0;}
+body.dark .schedule-input,.schedule-time{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
+body.dark .schedule-cancel{background:#1A1A2E;color:#9CA3AF;border-color:#2D2D44;}
+.scheduled-badge{font-size:10px;color:#B45309;background:#FEF3C7;border-radius:6px;padding:1px 6px;margin-left:4px;}
 .font-size-btn{font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:8px;background:white;color:#555;cursor:pointer;font-family:inherit;}
 .font-size-btn:hover{background:var(--bg);}
 .font-size-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
@@ -294,6 +307,7 @@ body.dark .font-size-btn.active{background:var(--blue);color:white;}
     <div class="online-badge" id="online-badge"><div class="online-dot"></div><span id="online-count">0명</span></div>
     <button class="hdr-btn" id="search-btn">🔍</button>
     <button class="hdr-btn" id="poll-btn">📊</button>
+    <button class="hdr-btn" id="schedule-btn">⏰</button>
     <button class="hdr-btn danger" id="clear-btn">🗑️</button>
     <button class="hdr-btn" id="settings-btn">⚙️</button>
     <button class="hdr-btn" id="logout-btn">나가기</button>
@@ -418,6 +432,17 @@ body.dark .font-size-btn.active{background:var(--blue);color:white;}
     <button class="poll-add-opt" id="poll-add-opt">+ 선택지 추가</button>
     <button class="poll-submit" id="poll-submit">투표 만들기</button>
     <button class="poll-cancel" id="poll-cancel">취소</button>
+  </div>
+</div>
+
+<!-- 예약 메시지 모달 -->
+<div id="schedule-modal">
+  <div class="schedule-box">
+    <div class="schedule-title">⏰ 메시지 예약</div>
+    <textarea id="schedule-text" class="schedule-input" placeholder="예약할 메시지 입력"></textarea>
+    <input id="schedule-time" class="schedule-time" type="datetime-local">
+    <button class="schedule-submit" id="schedule-submit">예약하기</button>
+    <button class="schedule-cancel" id="schedule-cancel">취소</button>
   </div>
 </div>
 
@@ -1012,6 +1037,54 @@ document.getElementById('poll-submit').addEventListener('click', function(){
   document.getElementById('poll-question').value='';
   document.querySelectorAll('.poll-option-input').forEach(function(el,i){ el.value=''; if(i>=2) el.remove(); });
   document.getElementById('poll-modal').classList.remove('show');
+});
+
+// 메시지 예약
+var scheduledMsgs = JSON.parse(localStorage.getItem('gg_scheduled')||'[]');
+
+function checkScheduled(){
+  var now = Date.now();
+  var remaining = [];
+  scheduledMsgs.forEach(function(item){
+    if(item.sendAt <= now){
+      if(myName){
+        push(ref(db,'messages'),{name:myName,text:item.text,target:'',time:serverTimestamp()});
+        showToast('예약 메시지가 전송됐습니다!');
+      }
+    } else {
+      remaining.push(item);
+    }
+  });
+  scheduledMsgs = remaining;
+  localStorage.setItem('gg_scheduled', JSON.stringify(scheduledMsgs));
+}
+
+setInterval(checkScheduled, 10000);
+
+document.getElementById('schedule-btn').addEventListener('click', function(){
+  if(!myName){ showToast('먼저 입장해 주세요!'); return; }
+  var now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('schedule-time').value = now.toISOString().slice(0,16);
+  document.getElementById('schedule-modal').classList.add('show');
+});
+
+document.getElementById('schedule-cancel').addEventListener('click', function(){ document.getElementById('schedule-modal').classList.remove('show'); });
+document.getElementById('schedule-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+
+document.getElementById('schedule-submit').addEventListener('click', function(){
+  var text = document.getElementById('schedule-text').value.trim();
+  var timeVal = document.getElementById('schedule-time').value;
+  if(!text){ showToast('메시지를 입력해 주세요!'); return; }
+  if(!timeVal){ showToast('시간을 선택해 주세요!'); return; }
+  var sendAt = new Date(timeVal).getTime();
+  if(sendAt <= Date.now()){ showToast('현재 시간 이후로 설정해 주세요!'); return; }
+  scheduledMsgs.push({ text:text, sendAt:sendAt });
+  localStorage.setItem('gg_scheduled', JSON.stringify(scheduledMsgs));
+  document.getElementById('schedule-text').value = '';
+  document.getElementById('schedule-modal').classList.remove('show');
+  var d = new Date(sendAt);
+  showToast((d.getMonth()+1)+'월 '+d.getDate()+'일 '+pad(d.getHours())+':'+pad(d.getMinutes())+' 예약됐습니다!');
 });
 
 // 온라인 목록
