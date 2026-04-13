@@ -1134,15 +1134,35 @@ function showSlashResult(title, items) {
   var box = document.getElementById('messages');
   var div = document.createElement('div');
   div.className = 'slash-result';
-  var html = '<div class="slash-result-title">' + title + '</div>';
+  var titleDiv = document.createElement('div');
+  titleDiv.className = 'slash-result-title';
+  titleDiv.textContent = title;
+  div.appendChild(titleDiv);
   if (!items.length) {
-    html += '<div class="slash-result-empty">검색 결과가 없습니다</div>';
+    var empty = document.createElement('div');
+    empty.className = 'slash-result-empty';
+    empty.textContent = '검색 결과가 없습니다';
+    div.appendChild(empty);
   } else {
     items.forEach(function(item) {
-      html += '<div class="slash-result-item"><span class="slash-result-name">' + esc(item.name) + '</span><span class="slash-result-phone" style="cursor:pointer" title="클릭하면 복사" onclick="navigator.clipboard.writeText(\'' + (item.phone||'').replace(/'/g,\'\') + '\').then(function(){showToast(\'전화번호가 복사됐습니다!\');})">' + esc(item.phone||'') + '</span></div>';
+      var row = document.createElement('div');
+      row.className = 'slash-result-item';
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'slash-result-name';
+      nameSpan.textContent = item.name;
+      var phoneSpan = document.createElement('span');
+      phoneSpan.className = 'slash-result-phone';
+      phoneSpan.textContent = item.phone || '';
+      phoneSpan.style.cursor = 'pointer';
+      phoneSpan.title = '클릭하면 복사';
+      phoneSpan.addEventListener('click', function() {
+        navigator.clipboard.writeText(item.phone || '').then(function() { showToast('전화번호가 복사됐습니다!'); });
+      });
+      row.appendChild(nameSpan);
+      row.appendChild(phoneSpan);
+      div.appendChild(row);
     });
   }
-  div.innerHTML = html;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
