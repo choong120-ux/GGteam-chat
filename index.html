@@ -958,55 +958,52 @@ document.getElementById('scroll-btn').addEventListener('click', function(){ var 
 document.getElementById('messages').addEventListener('scroll', function(){ if(this.scrollHeight-this.scrollTop-this.clientHeight<50) document.getElementById('scroll-btn').classList.remove('show'); });
 
 // 드래그앤드롭
-document.addEventListener('dragover', function(e){
-  e.preventDefault();
+window.addEventListener('dragenter', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
+window.addEventListener('dragover', function(e){
+  e.preventDefault(); e.stopPropagation();
   if(!myName) return;
-  var items = e.dataTransfer.items;
-  for(var i=0; i<items.length; i++){
-    if(items[i].type.indexOf('image')!==-1){
-      document.getElementById('drag-overlay').classList.add('show');
-      return;
-    }
-  }
-});
+  var types = e.dataTransfer.types;
+  var hasFile = Array.prototype.indexOf.call(types, 'Files') !== -1;
+  if(hasFile) document.getElementById('drag-overlay').classList.add('show');
+}, true);
 
-document.addEventListener('dragleave', function(e){
-  if(e.relatedTarget===null || e.relatedTarget===document.documentElement){
-    document.getElementById('drag-overlay').classList.remove('show');
-  }
-});
+window.addEventListener('dragleave', function(e){
+  e.preventDefault(); e.stopPropagation();
+  if(e.clientX===0 && e.clientY===0) document.getElementById('drag-overlay').classList.remove('show');
+}, true);
 
-document.addEventListener('drop', function(e){
-  e.preventDefault();
+window.addEventListener('drop', function(e){
+  e.preventDefault(); e.stopPropagation();
   document.getElementById('drag-overlay').classList.remove('show');
   if(!myName) return;
 
   var files = e.dataTransfer.files;
+  if(!files||!files.length) return;
+
   for(var i=0; i<files.length; i++){
     var file = files[i];
     if(file.type.indexOf('image')===-1) continue;
     if(file.size > 5*1024*1024){ showToast('5MB 이하 이미지만 전송 가능해요!'); continue; }
-
     (function(f){
       var reader = new FileReader();
       reader.onload = function(ev){
         var img = new Image();
         img.onload = function(){
-          var canvas = document.createElement('canvas'), MAX=600, w=img.width, h=img.height;
+          var canvas=document.createElement('canvas'), MAX=600, w=img.width, h=img.height;
           if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; }
           if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; }
           canvas.width=w; canvas.height=h;
           canvas.getContext('2d').drawImage(img,0,0,w,h);
-          var data = canvas.toDataURL('image/jpeg', 0.6);
-          push(ref(db,getPath()), { name:myName, type:'image', imageData:data, target:dmTarget||'', time:serverTimestamp() });
+          var data=canvas.toDataURL('image/jpeg',0.6);
+          push(ref(db,getPath()),{name:myName,type:'image',imageData:data,target:dmTarget||'',time:serverTimestamp()});
           showToast('이미지를 전송했어요!');
         };
-        img.src = ev.target.result;
+        img.src=ev.target.result;
       };
       reader.readAsDataURL(f);
     })(file);
   }
-});
+}, true);
 
 // 자동 로그인
 var saved=localStorage.getItem('gg_chat_name');
