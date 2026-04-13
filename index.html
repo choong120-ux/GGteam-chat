@@ -713,9 +713,7 @@ function renderMsgs(msgs) {
         html += '<div class="date-divider">' + dateStr + '</div>';
         lastDate = dateStr; prevName = '';
       }
-      var isContinuous = msg.name === prevName;
-    var showName = !isMe && !isContinuous;
-      html += '<div class="msg-wrap ' + (isMe ? 'me' : 'other') + (isContinuous ? ' continuous' : '') + '">';
+      html += '<div class="msg-wrap ' + (isMe ? 'me' : 'other') + '">';
       if (showName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row">';
       html += '<div class="msg-bubble" style="padding:4px">';
@@ -750,7 +748,7 @@ function renderMsgs(msgs) {
 
       var isMe = msg.name === myName;
       var color = isMe ? '' : getColor(msg.name);
-      html += '<div class="msg-wrap ' + (isMe?'me':'other') + '">';
+      html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
       if (msg.name !== prevName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
       html += '<div class="msg-row"><div class="msg-bubble" style="padding:0;background:transparent;border:none;box-shadow:none">' + pollHtml + '</div></div>';
       html += '</div>';
@@ -767,6 +765,9 @@ function renderMsgs(msgs) {
       html += '<div class="date-divider">' + dateStr + '</div>';
       lastDate = dateStr; prevName = '';
     }
+
+    var isContinuous = msg.name === prevName;
+    var showName = !isMe && !isContinuous;
 
     var isContinuous = msg.name === prevName;
     var showName = !isMe && !isContinuous;
@@ -791,7 +792,7 @@ function renderMsgs(msgs) {
         imgEl.src = imgMatch[0];
         imgEl.className = 'msg-image';
         imgEl.setAttribute('onerror', "this.style.display='none'");
-        imgEl.setAttribute('onclick', "window.open('" + imgMatch[0] + "','_blank')");
+        imgEl.setAttribute('onclick', "openImgModal('" + imgMatch[0] + "')");
         imgHtml = imgEl.outerHTML;
       }
     }
@@ -828,7 +829,7 @@ function renderMsgs(msgs) {
     actions += '<button class="action-btn" data-action="reply" data-key="' + msg.key + '" data-name="' + esc(msg.name) + '" data-text="' + esc(msg.text||'') + '">↩️</button>';
     actions += '</div>';
 
-    html += '<div class="msg-wrap ' + (isMe?'me':'other') + '">';
+    html += '<div class="msg-wrap ' + (isMe?'me':'other') + (isContinuous?' continuous':'') + '">';
     if (showName) html += '<div class="msg-name ' + color + '">' + esc(msg.name) + '</div>';
     html += actions;
     html += '<div class="msg-row">';
