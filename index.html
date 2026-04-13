@@ -1112,14 +1112,17 @@ function searchHospitalFromFirebase(keyword) {
   showToast('병원번호 검색 중...');
   onValue(ref(db, 'hospitals'), function(snap) {
     var data = snap.val();
-    if (!data || !Array.isArray(data)) {
+    if (!data) {
       showSlashResult('🏥 ' + keyword + ' 검색 결과', []);
       return;
     }
+    // 객체 또는 배열 모두 처리
+    var list = Array.isArray(data) ? data : Object.values(data);
     var kw = keyword.toLowerCase();
-    var results = data.filter(function(h) {
+    var results = list.filter(function(h) {
       return (h.name && h.name.toLowerCase().includes(kw)) ||
-             (h.category && h.category.toLowerCase().includes(kw));
+             (h.category && h.category.toLowerCase().includes(kw)) ||
+             (h.division && h.division.toLowerCase().includes(kw));
     });
     showSlashResult('🏥 ' + keyword + ' 검색 결과', results.map(function(h) {
       return { name: h.name + (h.division ? ' (' + h.division + ')' : ''), phone: h.phone, note: h.note };
