@@ -1155,6 +1155,67 @@ window.addEventListener('drop', function(e){
   }
 }, true);
 
+// 단축키
+document.addEventListener('keydown', function(e) {
+  // Ctrl+F — 검색창
+  if(e.ctrlKey && e.key === 'f') {
+    e.preventDefault();
+    var bar = document.getElementById('search-bar');
+    bar.classList.toggle('show');
+    if(bar.classList.contains('show')) document.getElementById('search-input').focus();
+    else { searchKw=''; renderMsgs(allMsgs); }
+  }
+  // Ctrl+D — 다크모드 토글
+  if(e.ctrlKey && e.key === 'd') {
+    e.preventDefault();
+    applyDark(!document.body.classList.contains('dark'));
+  }
+  // Ctrl+P — 투표
+  if(e.ctrlKey && e.key === 'p') {
+    e.preventDefault();
+    if(myName) document.getElementById('poll-modal').classList.add('show');
+  }
+  // Ctrl+End — 최신 메시지로
+  if(e.ctrlKey && e.key === 'End') {
+    e.preventDefault();
+    var box = document.getElementById('messages');
+    box.scrollTop = box.scrollHeight;
+  }
+  // Ctrl+Home — 맨 위로
+  if(e.ctrlKey && e.key === 'Home') {
+    e.preventDefault();
+    document.getElementById('messages').scrollTop = 0;
+  }
+});
+
+// 입력창 단축키
+document.getElementById('msg-input').addEventListener('keydown', function(e) {
+  // Esc — 답장 취소 / 멘션 팝업 닫기
+  if(e.key === 'Escape') {
+    var popup = document.getElementById('mention-popup');
+    if(popup && popup.innerHTML) { closeMentionPopup(); return; }
+    if(replyTo) { doUnsetReply(); return; }
+  }
+  // ↑ — 마지막 내 메시지 수정
+  if(e.key === 'ArrowUp' && this.value === '') {
+    e.preventDefault();
+    var myMsgs = allMsgs.filter(function(m){ return m.name===myName && !m.deleted && m.type!=='system' && m.type!=='image' && m.type!=='poll'; });
+    if(myMsgs.length > 0) {
+      var last = myMsgs[myMsgs.length-1];
+      startEdit(last.key, last.text);
+    }
+  }
+  // Ctrl+Enter — 줄바꿈
+  if(e.ctrlKey && e.key === 'Enter') {
+    e.preventDefault();
+    var pos = this.selectionStart;
+    this.value = this.value.slice(0,pos) + '
+' + this.value.slice(pos);
+    this.selectionStart = this.selectionEnd = pos+1;
+    autoResize(this);
+  }
+});
+
 // 자동 로그인
 var saved=localStorage.getItem('gg_chat_name');
 if(saved){ document.getElementById('name-input').value=saved; doLogin(); }
