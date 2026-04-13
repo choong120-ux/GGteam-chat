@@ -284,6 +284,25 @@ body.dark .guide-card-title{color:#E2E8F0;}
 body.dark .shortcut-table td{border-color:#2D2D44;color:#9CA3AF;}
 .shortcut-table td:first-child{font-weight:700;color:var(--mid);white-space:nowrap;}
 body.dark .shortcut-table td:first-child{color:var(--light);}
+.slash-popup{position:absolute;bottom:100%;left:14px;z-index:100;background:white;border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:220px;overflow:hidden;margin-bottom:6px;}
+body.dark .slash-popup{background:#252537;border-color:#2D2D44;}
+.slash-item{padding:10px 14px;font-size:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);}
+body.dark .slash-item{border-color:#2D2D44;}
+.slash-item:last-child{border-bottom:none;}
+.slash-item:hover{background:var(--pale);}
+body.dark .slash-item:hover{background:#1E2035;}
+.slash-cmd{font-weight:700;color:var(--mid);}
+.slash-desc{color:var(--gray);font-size:11px;}
+
+.slash-result{background:white;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:4px 0;align-self:flex-start;max-width:80%;}
+body.dark .slash-result{background:#252537;border-color:#2D2D44;}
+.slash-result-title{font-size:11px;font-weight:700;color:var(--mid);margin-bottom:8px;}
+.slash-result-item{font-size:12px;color:var(--navy);padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;}
+body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
+.slash-result-item:last-child{border-bottom:none;}
+.slash-result-name{font-weight:600;flex:1;}
+.slash-result-phone{color:var(--mid);font-weight:700;}
+.slash-result-empty{font-size:12px;color:var(--gray);}
 .c0{color:#2E5FA3}.c1{color:#1D9E75}.c2{color:#E8A020}.c3{color:#9B59B6}.c4{color:#E24B4A}.c5{color:#0891B2}
 
 .msg-text-collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
@@ -431,6 +450,7 @@ body.dark .shortcut-table td:first-child{color:var(--light);}
 
 <div class="input-area" id="input-area">
   <div id="mention-popup"></div>
+  <div id="slash-popup"></div>
   <div class="input-wrap">
     <textarea id="msg-input" placeholder="메시지 입력 (@멘션 가능)" rows="1"></textarea>
   </div>
@@ -647,14 +667,20 @@ function subscribeMsg(){
 // 메시지 전송
 document.getElementById('send-btn').addEventListener('click', doSend);
 document.getElementById('msg-input').addEventListener('keydown', function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } });
-document.getElementById('msg-input').addEventListener('input', function(){ autoResize(this); doTyping(); checkMention(this); });
+document.getElementById('msg-input').addEventListener('input', function(){
+  autoResize(this);
+  doTyping();
+  if (!checkSlash(this)) checkMention(this);
+  else closeSlashPopup();
+});
 
 function doSend(){
   var input=document.getElementById('msg-input');
   var text=input.value.trim();
   if(!text||!myName) return;
   if(currentTab==='dm'&&!dmTarget){ showToast('대화 상대를 선택해 주세요!'); return; }
-  input.value=''; input.style.height='auto'; clearTyping(); closeMentionPopup();
+  input.value=''; input.style.height='auto'; clearTyping(); closeMentionPopup(); closeSlashPopup();
+  if(handleSlashCmd(text)) return;
   var msgData={ name:myName, text:text, target:dmTarget||'', time:serverTimestamp() };
   if(replyTo){ msgData.replyTo={ name:replyTo.name, text:replyTo.text }; doUnsetReply(); }
   push(ref(db,getPath()), msgData).then(function(){
@@ -1015,6 +1041,109 @@ function doTyping(){ if(!myName) return; set(ref(db,'typing/'+myName),{time:serv
 function clearTyping(){ if(myName) set(ref(db,'typing/'+myName),null); }
 
 // 멘션
+// 슬래시 명령어
+var SLASH_CMDS = [
+  { cmd: '/병원', desc: '병원번호 검색 — /병원 아주대' },
+  { cmd: '/도움말', desc: '명령어 목록 표시' }
+];
+
+function checkSlash(el) {
+  var text = el.value;
+  var pos = el.selectionStart;
+  var before = text.slice(0, pos);
+
+  // /로 시작하는지 확인
+  var slashMatch = before.match(/^\/(\S*)$/);
+  if (!slashMatch) { closeSlashPopup(); return false; }
+
+  var query = slashMatch[1].toLowerCase();
+  var matches = SLASH_CMDS.filter(function(c) { return c.cmd.slice(1).startsWith(query); });
+
+  if (!matches.length) { closeSlashPopup(); return false; }
+
+  var popup = document.getElementById('slash-popup');
+  popup.innerHTML = '';
+  popup.className = 'slash-popup';
+
+  matches.forEach(function(c) {
+    var item = document.createElement('div');
+    item.className = 'slash-item';
+    item.innerHTML = '<span class="slash-cmd">' + c.cmd + '</span><span class="slash-desc">' + c.desc + '</span>';
+    item.addEventListener('click', function() {
+      el.value = c.cmd + ' ';
+      closeSlashPopup();
+      el.focus();
+    });
+    popup.appendChild(item);
+  });
+  return true;
+}
+
+function closeSlashPopup() {
+  var p = document.getElementById('slash-popup');
+  if (p) { p.innerHTML = ''; p.className = ''; }
+}
+
+function handleSlashCmd(text) {
+  if (!text.startsWith('/')) return false;
+
+  var parts = text.trim().split(' ');
+  var cmd = parts[0];
+  var arg = parts.slice(1).join(' ').trim();
+
+  if (cmd === '/도움말') {
+    showSlashResult('📖 사용 가능한 명령어', [
+      { name: '/병원 [검색어]', phone: '병원번호 검색' },
+      { name: '/도움말', phone: '명령어 목록' }
+    ]);
+    return true;
+  }
+
+  if (cmd === '/병원') {
+    if (!arg) { showToast('검색어를 입력해 주세요! 예: /병원 아주대'); return true; }
+    searchHospitalFromFirebase(arg);
+    return true;
+  }
+
+  return false;
+}
+
+function searchHospitalFromFirebase(keyword) {
+  showToast('병원번호 검색 중...');
+  onValue(ref(db, 'hospitals'), function(snap) {
+    var data = snap.val();
+    if (!data || !Array.isArray(data)) {
+      showSlashResult('🏥 ' + keyword + ' 검색 결과', []);
+      return;
+    }
+    var kw = keyword.toLowerCase();
+    var results = data.filter(function(h) {
+      return (h.name && h.name.toLowerCase().includes(kw)) ||
+             (h.category && h.category.toLowerCase().includes(kw));
+    });
+    showSlashResult('🏥 ' + keyword + ' 검색 결과', results.map(function(h) {
+      return { name: h.name + (h.division ? ' (' + h.division + ')' : ''), phone: h.phone, note: h.note };
+    }));
+  }, { onlyOnce: true });
+}
+
+function showSlashResult(title, items) {
+  var box = document.getElementById('messages');
+  var div = document.createElement('div');
+  div.className = 'slash-result';
+  var html = '<div class="slash-result-title">' + title + '</div>';
+  if (!items.length) {
+    html += '<div class="slash-result-empty">검색 결과가 없습니다</div>';
+  } else {
+    items.forEach(function(item) {
+      html += '<div class="slash-result-item"><span class="slash-result-name">' + esc(item.name) + '</span><span class="slash-result-phone">' + esc(item.phone||'') + '</span></div>';
+    });
+  }
+  div.innerHTML = html;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
 function checkMention(el){
   var text=el.value, pos=el.selectionStart, before=text.slice(0,pos);
   var match=before.match(/@([\w\uAC00-\uD7A3]*)$/);
