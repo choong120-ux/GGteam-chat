@@ -795,10 +795,8 @@ function renderMsgs(msgs){
     if(!isMe&&!isContinuous) html+='<div class="msg-name '+color+'">'+esc(msg.name)+'</div>';
     html+=actions;
     html+='<div class="msg-row">';
-    if(isMe) html+=readHtml;
     html+='<div class="msg-bubble" id="bb-'+msg.key+'">'+replyHtml+content+editedTag+imgHtml+'</div>';
     if(isLastInGroup) html+='<div class="msg-time">'+timeStr+'</div>';
-    if(!isMe) html+=readHtml;
     html+='</div>';
     if(reactHtml) html+=reactHtml;
     html+='</div>';
