@@ -253,6 +253,10 @@ body.dark .reaction-pill{background:#252537;border-color:#2D2D44;}
 
 .c0{color:#2E5FA3}.c1{color:#1D9E75}.c2{color:#E8A020}.c3{color:#9B59B6}.c4{color:#E24B4A}.c5{color:#0891B2}
 
+.msg-text-collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.more-btn{font-size:11px;color:var(--mid);background:none;border:none;cursor:pointer;padding:2px 0;font-family:inherit;display:block;margin-top:3px;}
+.msg-wrap.me .more-btn{color:#B5D4F4;}
+
 #drag-overlay{position:fixed;inset:0;background:rgba(27,58,107,0.85);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none;}
 #drag-overlay.show{display:flex;}
 #drag-overlay .drag-icon{font-size:48px;}
@@ -636,7 +640,15 @@ function renderMsgs(msgs){
     var content='';
     if(msg.deleted) content='<span class="deleted-msg">삭제된 메시지입니다</span>';
     else if(searchKw&&msg.text) content=esc(msg.text).split(searchKw).join('<span class="highlight">'+esc(searchKw)+'</span>');
-    else content=processText(msg.text||'');
+    else {
+      var processed = processText(msg.text||'');
+      if((msg.text||'').length > 100) {
+        content = '<span class="msg-text-collapsed" id="mtc-'+msg.key+'">'+processed+'</span>'
+          + '<button class="more-btn" data-key="'+msg.key+'" data-action="more">더보기</button>';
+      } else {
+        content = processed;
+      }
+    }
 
     var imgHtml='';
     if(msg.text&&!msg.deleted){
@@ -713,6 +725,21 @@ function renderMsgs(msgs){
   });
 
   box.querySelectorAll('.reaction-pill').forEach(function(pill){ pill.addEventListener('click', function(){ toggleReaction(pill.dataset.key, pill.dataset.emoji); }); });
+
+  box.querySelectorAll('[data-action="more"]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.dataset.key;
+      var span = document.getElementById('mtc-'+key);
+      if(!span) return;
+      if(span.classList.contains('msg-text-collapsed')){
+        span.classList.remove('msg-text-collapsed');
+        btn.textContent = '접기';
+      } else {
+        span.classList.add('msg-text-collapsed');
+        btn.textContent = '더보기';
+      }
+    });
+  });
   box.querySelectorAll('.poll-option').forEach(function(opt){ opt.addEventListener('click', function(){ votePoll(opt.dataset.msgKey, opt.dataset.optKey); }); });
 
   if(atBottom) box.scrollTop=box.scrollHeight;
