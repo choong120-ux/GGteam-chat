@@ -1044,6 +1044,7 @@ function clearTyping(){ if(myName) set(ref(db,'typing/'+myName),null); }
 // 슬래시 명령어
 var SLASH_CMDS = [
   { cmd: '/병원', desc: '병원번호 검색 — /병원 아주대' },
+  { cmd: '/진단', desc: '진단별 확인사항 — /진단 STEMI' },
   { cmd: '/도움말', desc: '명령어 목록 표시' }
 ];
 
@@ -1094,6 +1095,7 @@ function handleSlashCmd(text) {
   if (cmd === '/도움말') {
     showSlashResult('📖 사용 가능한 명령어', [
       { name: '/병원 [검색어]', phone: '병원번호 검색' },
+      { name: '/진단 [질환명]', phone: '진단별 확인사항' },
       { name: '/도움말', phone: '명령어 목록' }
     ]);
     return true;
@@ -1102,6 +1104,12 @@ function handleSlashCmd(text) {
   if (cmd === '/병원') {
     if (!arg) { showToast('검색어를 입력해 주세요! 예: /병원 아주대'); return true; }
     searchHospitalFromFirebase(arg);
+    return true;
+  }
+
+  if (cmd === '/진단') {
+    if (!arg) { showToast('질환명을 입력해 주세요! 예: /진단 STEMI'); return true; }
+    searchDiagnosisFromFirebase(arg);
     return true;
   }
 
@@ -1128,6 +1136,57 @@ function searchHospitalFromFirebase(keyword) {
       return { name: (h.category ? '[' + h.category + '] ' : '') + h.name + (h.division ? ' (' + h.division + ')' : ''), phone: h.phone, note: h.note };
     }));
   }, { onlyOnce: true });
+}
+
+function searchDiagnosisFromFirebase(keyword) {
+  showToast('진단 확인사항 검색 중...');
+  onValue(ref(db, 'diagnosis'), function(snap) {
+    var data = snap.val();
+    if (!data) {
+      showDiagResult(keyword, []);
+      return;
+    }
+    var list = Array.isArray(data) ? data : Object.values(data);
+    var kw = keyword.toLowerCase();
+    var results = list.filter(function(d) {
+      return (d.nameKo && d.nameKo.toLowerCase().includes(kw)) ||
+             (d.nameEn && d.nameEn.toLowerCase().includes(kw));
+    });
+    showDiagResult(keyword, results);
+  }, { onlyOnce: true });
+}
+
+function showDiagResult(keyword, items) {
+  var box = document.getElementById('messages');
+  var div = document.createElement('div');
+  div.className = 'slash-result';
+
+  var titleDiv = document.createElement('div');
+  titleDiv.className = 'slash-result-title';
+  titleDiv.textContent = '📋 ' + keyword + ' 확인사항';
+  div.appendChild(titleDiv);
+
+  if (!items.length) {
+    var empty = document.createElement('div');
+    empty.className = 'slash-result-empty';
+    empty.textContent = '검색 결과가 없습니다';
+    div.appendChild(empty);
+  } else {
+    items.forEach(function(item) {
+      var nameDiv = document.createElement('div');
+      nameDiv.style.cssText = 'font-size:12px;font-weight:700;color:var(--navy);padding:6px 0 4px;';
+      nameDiv.textContent = item.nameKo + (item.nameEn ? ' (' + item.nameEn + ')' : '');
+      div.appendChild(nameDiv);
+
+      var checkDiv = document.createElement('div');
+      checkDiv.style.cssText = 'font-size:12px;color:#444;white-space:pre-wrap;line-height:1.7;padding-bottom:6px;border-bottom:1px solid var(--border);';
+      checkDiv.textContent = item.checklist;
+      div.appendChild(checkDiv);
+    });
+  }
+
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 
 function showSlashResult(title, items) {
