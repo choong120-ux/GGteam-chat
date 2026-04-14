@@ -616,7 +616,7 @@ function doLogin(){
   onDisconnect(onRef).remove();
 
   // 탭 닫힐 때 자동 퇴장 메시지
-  var leaveRef = push(ref(db,'messages'));
+  var leaveRef = ref(db, 'messages/' + Date.now() + '_leave_' + myName);
   onDisconnect(leaveRef).set({ type:'system', text: myName+'님이 퇴장했습니다', time: serverTimestamp() });
 
   push(ref(db,'messages'), { type:'system', text: myName+'님이 입장했습니다', time: serverTimestamp() });
