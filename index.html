@@ -614,6 +614,11 @@ function doLogin(){
   var onRef = ref(db, 'online/'+myName);
   set(onRef, { name: myName, time: serverTimestamp() });
   onDisconnect(onRef).remove();
+
+  // 탭 닫힐 때 자동 퇴장 메시지
+  var leaveRef = push(ref(db,'messages'));
+  onDisconnect(leaveRef).set({ type:'system', text: myName+'님이 퇴장했습니다', time: serverTimestamp() });
+
   push(ref(db,'messages'), { type:'system', text: myName+'님이 입장했습니다', time: serverTimestamp() });
 
   unsubOnline = onValue(ref(db,'online'), function(snap){
