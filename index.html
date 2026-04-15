@@ -784,6 +784,7 @@ document.querySelectorAll('.tab').forEach(function(btn){
     if(currentTab==='dm'){ dmWrap.classList.add('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; subscribeMsg(); }
     else if(currentTab==='notice'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.add('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
     else if(currentTab==='guide'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.remove('show'); guideWrap.classList.add('show'); msgBox.style.display='none'; dmTarget=''; }
+    else if(currentTab==='duty'){ window.open('https://my-duty.netlify.app/', '_blank'); currentTab='all'; document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); }); document.querySelector('[data-tab="all"]').classList.add('active'); }
     else { dmWrap.classList.remove('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
   });
 });
