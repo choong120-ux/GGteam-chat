@@ -659,6 +659,20 @@ document.getElementById('oath-agree-btn').addEventListener('click', function(){
 
 function doLogin(name){
   if(!name) return;
+
+  // 중복 로그인 체크
+  onValue(ref(db, 'online/'+name), function(snap){
+    if(snap.val()){
+      // 기존 로그인 강제 종료 신호
+      set(ref(db, 'force_logout/'+name), { time: serverTimestamp() });
+      setTimeout(function(){ proceedLogin(name); }, 500);
+    } else {
+      proceedLogin(name);
+    }
+  }, { onlyOnce: true });
+}
+
+function proceedLogin(name){
   myName = name;
   localStorage.removeItem('gg_chat_name');
   document.getElementById('login-screen').style.display = 'none';
@@ -672,7 +686,24 @@ function doLogin(name){
   var leaveRef = ref(db, 'messages/' + Date.now() + '_leave_' + myName);
   onDisconnect(leaveRef).set({ type:'system', text: myName+'님이 퇴장했습니다', time: serverTimestamp() });
 
+  // 강제 로그아웃 신호 감지
+  onValue(ref(db, 'force_logout/'+myName), function(snap){
+    if(snap.val() && myName){
+      showToast('다른 기기에서 로그인되어 자동 로그아웃됩니다.');
+      setTimeout(function(){
+        set(ref(db,'online/'+myName), null);
+        remove(ref(db,'force_logout/'+myName));
+        myName='';
+        document.getElementById('name-select').value='';
+        document.getElementById('login-screen').style.display='flex';
+        if(unsubMsg) unsubMsg();
+        if(unsubTyping) unsubTyping();
+      }, 2000);
+    }
+  });
+
   push(ref(db,'messages'), { type:'system', text: myName+'님이 입장했습니다', time: serverTimestamp() });
+  writeLog('입장');
 
   unsubOnline = onValue(ref(db,'online'), function(snap){
     var data = snap.val()||{};
@@ -698,6 +729,7 @@ function doLogin(name){
 // 로그아웃
 document.getElementById('logout-btn').addEventListener('click', function(){
   if(!myName) return;
+  writeLog('퇴장');
   push(ref(db,'messages'), { type:'system', text: myName+'님이 퇴장했습니다', time: serverTimestamp() });
   set(ref(db,'online/'+myName), null);
   if(unsubMsg) unsubMsg(); if(unsubTyping) unsubTyping(); if(unsubOnline) unsubOnline();
@@ -1029,7 +1061,7 @@ function openImgModal(src){
 document.getElementById('img-modal-close').addEventListener('click', function(){ document.getElementById('img-modal').classList.remove('show'); });
 document.getElementById('img-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
 document.getElementById('img-open-btn').addEventListener('click', function(){ window.open(document.getElementById('img-modal-img').src,'_blank'); });
-document.getElementById('img-save-btn').addEventListener('click', function(){ var a=document.createElement('a'); a.href=document.getElementById('img-modal-img').src; a.download='image.jpg'; a.click(); });
+document.getElementById('img-save-btn').addEventListener('click', function(){ var a=document.createElement('a'); a.href=document.getElementById('img-modal-img').src; a.download='image.jpg'; a.click(); writeLog('이미지 저장'); });
 document.getElementById('img-copy-btn').addEventListener('click', function(){
   var img=document.getElementById('img-modal-img');
   var canvas=document.createElement('canvas'); canvas.width=img.naturalWidth; canvas.height=img.naturalHeight;
@@ -1553,6 +1585,16 @@ document.getElementById('msg-input').addEventListener('keydown', function(e) {
     autoResize(this);
   }
 });
+
+// 활동 로그 기록
+function writeLog(action, extra) {
+  if (!myName) return;
+  var now = new Date();
+  var timeStr = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+  var logData = { name: myName, action: action, time: timeStr };
+  if (extra) logData.extra = extra;
+  push(ref(db, 'access_log'), logData);
+}
 
 // 교대 시 자동 삭제
 var SHIFT_TIMES = [
