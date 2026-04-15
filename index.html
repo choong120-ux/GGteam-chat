@@ -611,9 +611,14 @@ body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;col
     <div class="admin-title">👑 관리자 메뉴</div>
 
     <div class="admin-section">
-      <div class="admin-section-title">💬 메시지 관리</div>
-      <input id="admin-msg-key" class="admin-input" placeholder="메시지 키 입력 (hovering 시 확인)">
-      <button class="admin-btn danger" id="admin-del-msg-btn">선택 메시지 삭제</button>
+      <div class="admin-section-title">📋 접속 이력</div>
+      <div style="display:flex;gap:5px;margin-bottom:6px">
+        <button class="admin-btn primary" id="admin-log-today" style="margin-bottom:0">오늘</button>
+        <button class="admin-btn primary" id="admin-log-all" style="margin-bottom:0">전체</button>
+      </div>
+      <div id="admin-log-box" style="background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:200px;overflow-y:auto;font-size:11px;">
+        <span style="color:var(--gray)">오늘 또는 전체 버튼을 눌러주세요</span>
+      </div>
     </div>
 
     <div class="admin-section">
@@ -1549,18 +1554,36 @@ document.getElementById('hdr-admin-btn').addEventListener('click', function(){
 document.getElementById('admin-modal-close').addEventListener('click', function(){ document.getElementById('admin-modal').classList.remove('show'); });
 document.getElementById('admin-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
 
-// 메시지 삭제
-document.getElementById('admin-del-msg-btn').addEventListener('click', function(){
-  var key = document.getElementById('admin-msg-key').value.trim();
-  var msgArea = document.getElementById('admin-msg-area');
-  if(!key){ msgArea.innerHTML='<span style="color:var(--red)">메시지 키를 입력해 주세요</span>'; return; }
-  if(confirm('이 메시지를 삭제할까요?')){
-    update(ref(db, getPath()+'/'+key), { text: null, deleted: true });
-    document.getElementById('admin-msg-key').value = '';
-    msgArea.innerHTML = '<span style="color:var(--green)">✅ 삭제됐습니다</span>';
-    setTimeout(function(){ msgArea.innerHTML=''; }, 2000);
-  }
-});
+// 접속 이력 조회
+function loadAccessLog(todayOnly){
+  var box = document.getElementById('admin-log-box');
+  box.innerHTML = '<span style="color:var(--gray)">불러오는 중...</span>';
+  onValue(ref(db, 'access_log'), function(snap){
+    var data = snap.val();
+    if(!data){ box.innerHTML='<span style="color:var(--gray)">이력이 없습니다</span>'; return; }
+    var logs = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
+    if(todayOnly){
+      var today = new Date();
+      var todayStr = today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate());
+      logs = logs.filter(function(l){ return l.time && l.time.startsWith(todayStr); });
+    }
+    if(!logs.length){ box.innerHTML='<span style="color:var(--gray)">이력이 없습니다</span>'; return; }
+    var html = '';
+    logs.forEach(function(log){
+      var color = log.action==='입장'?'#1D9E75':log.action==='퇴장'?'#E24B4A':'#2E5FA3';
+      html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">';
+      html += '<span style="font-weight:700;color:var(--navy)">'+log.name+'</span>';
+      html += '<span style="color:'+color+';font-weight:600">'+log.action+'</span>';
+      html += '<span style="color:var(--gray)">'+log.time.slice(11,16)+'</span>';
+      html += '</div>';
+    });
+    html += '<div style="text-align:right;color:var(--gray);margin-top:4px">총 '+logs.length+'건</div>';
+    box.innerHTML = html;
+  }, { onlyOnce: true });
+}
+
+document.getElementById('admin-log-today').addEventListener('click', function(){ loadAccessLog(true); });
+document.getElementById('admin-log-all').addEventListener('click', function(){ loadAccessLog(false); });
 
 // 강제 로그아웃
 document.getElementById('admin-force-logout-btn').addEventListener('click', function(){
