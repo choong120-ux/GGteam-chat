@@ -405,7 +405,7 @@ body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
   <button class="tab" data-tab="dm">1:1 채팅</button>
   <button class="tab" data-tab="notice">📌 공지</button>
   <button class="tab" data-tab="guide">📖 사용법</button>
-  <button class="tab" data-tab="duty">📅 근무표</button>
+  <a class="tab" href="https://my-duty.netlify.app/" target="_blank" style="text-decoration:none;display:flex;align-items:center;">📅 근무표</a>
 </div>
 
 <div id="dm-wrap">
@@ -553,9 +553,7 @@ body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
         <button class="font-size-btn" id="font-large">크게</button>
       </div>
     </div>
-    <div class="settings-label" style="margin-bottom:8px">닉네임 변경</div>
-    <input id="nickname-input" class="settings-input" placeholder="새 닉네임 입력" maxlength="10">
-    <button class="settings-save" id="nickname-save">저장</button>
+
     <button class="settings-close-btn" id="settings-close">닫기</button>
   </div>
 </div>
@@ -784,7 +782,6 @@ document.querySelectorAll('.tab').forEach(function(btn){
     if(currentTab==='dm'){ dmWrap.classList.add('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; subscribeMsg(); }
     else if(currentTab==='notice'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.add('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
     else if(currentTab==='guide'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.remove('show'); guideWrap.classList.add('show'); msgBox.style.display='none'; dmTarget=''; }
-    else if(currentTab==='duty'){ window.open('https://my-duty.netlify.app/', '_blank'); currentTab='all'; document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); }); document.querySelector('[data-tab="all"]').classList.add('active'); }
     else { dmWrap.classList.remove('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
   });
 });
@@ -1358,21 +1355,10 @@ document.getElementById('notif-toggle').addEventListener('click', function(){ ap
 if(notifOff) applyNotif(true);
 
 // 설정
-document.getElementById('settings-btn').addEventListener('click', function(){ document.getElementById('settings-modal').classList.add('show'); document.getElementById('nickname-input').value=myName||''; });
+document.getElementById('settings-btn').addEventListener('click', function(){ document.getElementById('settings-modal').classList.add('show'); });
 document.getElementById('settings-close').addEventListener('click', function(){ document.getElementById('settings-modal').classList.remove('show'); });
 document.getElementById('settings-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
-document.getElementById('nickname-save').addEventListener('click', function(){
-  var newName=document.getElementById('nickname-input').value.trim();
-  if(!newName){ showToast('닉네임을 입력해 주세요!'); return; }
-  if(newName===myName){ document.getElementById('settings-modal').classList.remove('show'); return; }
-  var oldName=myName;
-  set(ref(db,'online/'+oldName),null);
-  push(ref(db,'messages'),{type:'system',text:oldName+'님이 '+newName+'(으)로 닉네임을 변경했습니다',time:serverTimestamp()});
-  myName=newName; localStorage.setItem('gg_chat_name',newName);
-  document.getElementById('header-user').textContent=newName;
-  var onRef=ref(db,'online/'+myName); set(onRef,{name:myName,time:serverTimestamp()}); onDisconnect(onRef).remove();
-  document.getElementById('settings-modal').classList.remove('show'); showToast('닉네임이 변경됐습니다!');
-});
+
 
 // 투표
 document.getElementById('poll-btn').addEventListener('click', function(){ if(!myName){ showToast('먼저 입장해 주세요!'); return; } document.getElementById('poll-modal').classList.add('show'); });
