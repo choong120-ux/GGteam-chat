@@ -965,7 +965,7 @@ function renderMsgs(msgs){
     if(!msg.deleted) actions+='<button class="action-btn pin" data-action="pin" data-key="'+msg.key+'" data-name="'+esc(msg.name)+'" data-text="'+esc(msg.text||'')+'">📌공지</button>';
     if(isMe&&!msg.deleted) actions+='<button class="action-btn" data-action="edit" data-key="'+msg.key+'" data-text="'+esc(msg.text||'')+'">수정</button>';
     if(!msg.deleted) actions+='<button class="action-btn" data-action="copy" data-text="'+esc(msg.text||'')+'">복사</button>';
-    if(isMe&&!msg.deleted) actions+='<button class="action-btn del" data-action="del" data-key="'+msg.key+'">삭제</button>';
+    if((isMe||myName==='최충일')&&!msg.deleted) actions+='<button class="action-btn del" data-action="del" data-key="'+msg.key+'">삭제</button>';
     actions+='<button class="action-btn" data-action="emoji" data-key="'+msg.key+'">😊</button>';
     actions+='<button class="action-btn" data-action="reply" data-key="'+msg.key+'" data-name="'+esc(msg.name)+'" data-text="'+esc(msg.text||'')+'">↩️</button>';
     actions+='</div>';
@@ -1569,7 +1569,9 @@ document.getElementById('admin-force-logout-btn').addEventListener('click', func
   if(!target){ msgArea.innerHTML='<span style="color:var(--red)">팀원을 선택해 주세요</span>'; return; }
   if(confirm(target+'님을 강제 로그아웃할까요?')){
     set(ref(db, 'force_logout/'+target), { time: serverTimestamp() });
-    msgArea.innerHTML = '<span style="color:var(--green)">✅ '+target+'님 강제 로그아웃 완료</span>';
+    set(ref(db, 'online/'+target), null);
+    push(ref(db,'messages'), { type:'system', text: target+'님이 관리자에 의해 강제 퇴장됐습니다', time: serverTimestamp() });
+    msgArea.innerHTML = '<span style="color:var(--green)">✅ '+target+'님 강제 퇴장 완료</span>';
     setTimeout(function(){ msgArea.innerHTML=''; }, 2000);
   }
 });
