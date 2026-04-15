@@ -1512,6 +1512,60 @@ document.getElementById('msg-input').addEventListener('keydown', function(e) {
   }
 });
 
+// 교대 시 자동 삭제
+var SHIFT_TIMES = [
+  { h: 14, m: 50, name: 'D 근무' },
+  { h: 22, m: 20, name: 'E 근무' },
+  { h:  6, m: 50, name: 'N 근무' }
+];
+
+var shiftWarned = {}; // 경고 중복 방지
+
+function checkShiftDelete() {
+  if (!myName) return;
+  var now = new Date();
+  var nowH = now.getHours();
+  var nowM = now.getMinutes();
+  var nowTotal = nowH * 60 + nowM;
+
+  SHIFT_TIMES.forEach(function(shift) {
+    var shiftTotal = shift.h * 60 + shift.m;
+    var diff = shiftTotal - nowTotal;
+    var key = shift.name;
+
+    if (diff === 10 && !shiftWarned[key + '_10']) {
+      shiftWarned[key + '_10'] = true;
+      push(ref(db, 'messages'), { type: 'system', text: '⚠️ ' + shift.name + ' 교대까지 10분 남았습니다. 채팅이 자동 삭제됩니다.', time: serverTimestamp() });
+    }
+    if (diff === 5 && !shiftWarned[key + '_5']) {
+      shiftWarned[key + '_5'] = true;
+      push(ref(db, 'messages'), { type: 'system', text: '⚠️ ' + shift.name + ' 교대까지 5분 남았습니다. 채팅이 자동 삭제됩니다.', time: serverTimestamp() });
+    }
+    if (diff === 1 && !shiftWarned[key + '_1']) {
+      shiftWarned[key + '_1'] = true;
+      push(ref(db, 'messages'), { type: 'system', text: '⚠️ ' + shift.name + ' 교대까지 1분 남았습니다. 채팅이 곧 삭제됩니다.', time: serverTimestamp() });
+    }
+    if (diff === 0 && !shiftWarned[key + '_0']) {
+      shiftWarned[key + '_0'] = true;
+      // 전체 채팅 삭제
+      onValue(ref(db, 'messages'), function(snap) {
+        var data = snap.val() || {};
+        Object.keys(data).forEach(function(k) { remove(ref(db, 'messages/' + k)); });
+      }, { onlyOnce: true });
+      remove(ref(db, 'pinned'));
+      // 삭제 후 안내 메시지
+      setTimeout(function() {
+        push(ref(db, 'messages'), { type: 'system', text: '🔄 ' + shift.name + ' 교대로 인해 채팅이 초기화됐습니다.', time: serverTimestamp() });
+        // 자정 넘어가면 shiftWarned 초기화
+        shiftWarned = {};
+      }, 2000);
+    }
+  });
+}
+
+// 1분마다 체크
+setInterval(checkShiftDelete, 60000);
+
 // 자동 로그인
 var saved=localStorage.getItem('gg_chat_name');
 if(saved){ document.getElementById('name-input').value=saved; doLogin(); }
