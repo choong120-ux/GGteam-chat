@@ -47,7 +47,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);height:100vh;dis
 .notice-text{flex:1;font-size:12px;font-weight:600;color:#92400E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .notice-close{font-size:14px;color:#B45309;cursor:pointer;flex-shrink:0;background:none;border:none;}
 
-.tabs{display:flex;background:var(--navy);padding:0 12px;gap:2px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.tabs{display:flex;background:var(--navy);padding:0 12px;gap:2px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.05);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;} .tabs::-webkit-scrollbar{display:none;}
 .tab{padding:10px 10px;font-size:11px;font-weight:600;color:var(--light);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;}
 .tab.active{color:white;border-bottom-color:#4B9EF0;}
 
