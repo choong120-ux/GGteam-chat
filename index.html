@@ -303,6 +303,23 @@ body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
 .slash-result-name{font-weight:600;flex:1;}
 .slash-result-phone{color:var(--mid);font-weight:700;}
 .slash-result-empty{font-size:12px;color:var(--gray);}
+#admin-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;}
+#admin-modal.show{display:flex;}
+.admin-box{background:white;border-radius:20px;padding:28px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.3);}
+.admin-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:6px;}
+.admin-section{margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:16px;}
+.admin-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.admin-section-title{font-size:11px;font-weight:700;color:var(--gray);margin-bottom:8px;text-transform:uppercase;}
+.admin-btn{width:100%;height:38px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:none;margin-bottom:6px;}
+.admin-btn.danger{background:#FDECEC;color:var(--red);}
+.admin-btn.primary{background:var(--pale);color:var(--blue);}
+.admin-btn.warning{background:#FEF3C7;color:#B45309;}
+.admin-input{width:100%;height:36px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;color:var(--navy);background:white;outline:none;margin-bottom:6px;}
+.admin-select{width:100%;height:36px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;color:var(--navy);background:white;outline:none;margin-bottom:6px;}
+.admin-close{width:100%;height:38px;background:var(--bg);color:#555;border:1px solid var(--border);border-radius:10px;font-size:12px;cursor:pointer;font-family:inherit;margin-top:8px;}
+body.dark .admin-box{background:#252537;}
+body.dark .admin-title{color:#E2E8F0;}
+body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;color:#E2E8F0;}
 .c0{color:#2E5FA3}.c1{color:#1D9E75}.c2{color:#E8A020}.c3{color:#9B59B6}.c4{color:#E24B4A}.c5{color:#0891B2}
 
 .msg-text-collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
@@ -385,6 +402,7 @@ body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
     <button class="hdr-btn" id="schedule-btn">⏰</button>
     <button class="hdr-btn danger" id="clear-btn">🗑️</button>
     <button class="hdr-btn" id="settings-btn">⚙️</button>
+    <button class="hdr-btn" id="hdr-admin-btn" style="display:none;color:#FCD34D;border-color:rgba(252,211,77,0.4)">👑 관리자</button>
     <button class="hdr-btn" id="logout-btn">나가기</button>
   </div>
 </div>
@@ -587,6 +605,39 @@ body.dark .slash-result-item{color:#E2E8F0;border-color:#2D2D44;}
   </div>
 </div>
 
+<!-- 관리자 모달 -->
+<div id="admin-modal">
+  <div class="admin-box">
+    <div class="admin-title">👑 관리자 메뉴</div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">💬 메시지 관리</div>
+      <input id="admin-msg-key" class="admin-input" placeholder="메시지 키 입력 (hovering 시 확인)">
+      <button class="admin-btn danger" id="admin-del-msg-btn">선택 메시지 삭제</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">👤 팀원 관리</div>
+      <select id="admin-member-select" class="admin-select">
+        <option value="">팀원 선택</option>
+      </select>
+      <button class="admin-btn danger" id="admin-force-logout-btn">강제 로그아웃</button>
+      <input id="admin-new-member" class="admin-input" placeholder="새 팀원 이름 입력">
+      <button class="admin-btn primary" id="admin-add-member-btn">팀원 추가</button>
+      <button class="admin-btn danger" id="admin-del-member-btn">선택 팀원 삭제</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🔑 비밀번호 관리</div>
+      <input id="admin-new-pw" class="admin-input" placeholder="새 비밀번호 입력" type="password">
+      <button class="admin-btn warning" id="admin-change-pw-btn">비밀번호 변경</button>
+    </div>
+
+    <div id="admin-msg-area" style="font-size:11px;margin-top:4px;"></div>
+    <button class="admin-close" id="admin-modal-close">닫기</button>
+  </div>
+</div>
+
 <!-- 온라인 목록 모달 -->
 <div id="online-modal">
   <div class="online-box">
@@ -704,6 +755,7 @@ function proceedLogin(name){
 
   push(ref(db,'messages'), { type:'system', text: myName+'님이 입장했습니다', time: serverTimestamp() });
   writeLog('입장');
+  initAdmin();
 
   unsubOnline = onValue(ref(db,'online'), function(snap){
     var data = snap.val()||{};
@@ -1467,6 +1519,132 @@ document.getElementById('schedule-submit').addEventListener('click', function(){
   document.getElementById('schedule-modal').classList.remove('show');
   var d = new Date(sendAt);
   showToast((d.getMonth()+1)+'월 '+d.getDate()+'일 '+pad(d.getHours())+':'+pad(d.getMinutes())+' 예약됐습니다!');
+});
+
+// 관리자 기능
+var ADMIN_NAME = '최충일';
+var CHAT_PASSWORD = localStorage.getItem('gg_chat_pw') || '1234'; // 기본 비밀번호
+
+function initAdmin(){
+  if(myName !== ADMIN_NAME) return;
+  document.getElementById('hdr-admin-btn').style.display = 'block';
+}
+
+document.getElementById('hdr-admin-btn').addEventListener('click', function(){
+  document.getElementById('admin-modal').classList.add('show');
+  // 팀원 목록 로드
+  loadMemberList();
+  // 온라인 팀원 목록 관리자 셀렉트에 추가
+  var sel = document.getElementById('admin-member-select');
+  sel.innerHTML = '<option value="">팀원 선택</option>';
+  onlineUsers.forEach(function(n){
+    if(n !== myName){
+      var opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      sel.appendChild(opt);
+    }
+  });
+});
+
+document.getElementById('admin-modal-close').addEventListener('click', function(){ document.getElementById('admin-modal').classList.remove('show'); });
+document.getElementById('admin-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+
+// 메시지 삭제
+document.getElementById('admin-del-msg-btn').addEventListener('click', function(){
+  var key = document.getElementById('admin-msg-key').value.trim();
+  var msgArea = document.getElementById('admin-msg-area');
+  if(!key){ msgArea.innerHTML='<span style="color:var(--red)">메시지 키를 입력해 주세요</span>'; return; }
+  if(confirm('이 메시지를 삭제할까요?')){
+    update(ref(db, getPath()+'/'+key), { text: null, deleted: true });
+    document.getElementById('admin-msg-key').value = '';
+    msgArea.innerHTML = '<span style="color:var(--green)">✅ 삭제됐습니다</span>';
+    setTimeout(function(){ msgArea.innerHTML=''; }, 2000);
+  }
+});
+
+// 강제 로그아웃
+document.getElementById('admin-force-logout-btn').addEventListener('click', function(){
+  var target = document.getElementById('admin-member-select').value;
+  var msgArea = document.getElementById('admin-msg-area');
+  if(!target){ msgArea.innerHTML='<span style="color:var(--red)">팀원을 선택해 주세요</span>'; return; }
+  if(confirm(target+'님을 강제 로그아웃할까요?')){
+    set(ref(db, 'force_logout/'+target), { time: serverTimestamp() });
+    msgArea.innerHTML = '<span style="color:var(--green)">✅ '+target+'님 강제 로그아웃 완료</span>';
+    setTimeout(function(){ msgArea.innerHTML=''; }, 2000);
+  }
+});
+
+// 팀원 목록 로드
+function loadMemberList(){
+  onValue(ref(db, 'members'), function(snap){
+    var data = snap.val();
+    if(!data) return;
+    var members = Array.isArray(data) ? data : Object.values(data);
+    var sel = document.getElementById('admin-member-select');
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">팀원 선택</option>';
+    members.forEach(function(m){
+      var opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      if(m === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    // 로그인 드롭박스도 업데이트
+    var loginSel = document.getElementById('name-select');
+    var loginCur = loginSel.value;
+    loginSel.innerHTML = '<option value="">-- 이름을 선택하세요 --</option>';
+    members.sort().forEach(function(m){
+      var opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      if(m === loginCur) opt.selected = true;
+      loginSel.appendChild(opt);
+    });
+  }, { onlyOnce: true });
+}
+
+// 팀원 추가
+document.getElementById('admin-add-member-btn').addEventListener('click', function(){
+  var name = document.getElementById('admin-new-member').value.trim();
+  var msgArea = document.getElementById('admin-msg-area');
+  if(!name){ msgArea.innerHTML='<span style="color:var(--red)">이름을 입력해 주세요</span>'; return; }
+  onValue(ref(db, 'members'), function(snap){
+    var data = snap.val() || [];
+    var members = Array.isArray(data) ? data : Object.values(data);
+    if(members.includes(name)){ msgArea.innerHTML='<span style="color:var(--red)">이미 있는 팀원입니다</span>'; return; }
+    members.push(name);
+    set(ref(db, 'members'), members);
+    document.getElementById('admin-new-member').value = '';
+    msgArea.innerHTML = '<span style="color:var(--green)">✅ '+name+'님 추가됐습니다</span>';
+    setTimeout(function(){ msgArea.innerHTML=''; loadMemberList(); }, 1500);
+  }, { onlyOnce: true });
+});
+
+// 팀원 삭제
+document.getElementById('admin-del-member-btn').addEventListener('click', function(){
+  var target = document.getElementById('admin-member-select').value;
+  var msgArea = document.getElementById('admin-msg-area');
+  if(!target){ msgArea.innerHTML='<span style="color:var(--red)">팀원을 선택해 주세요</span>'; return; }
+  if(confirm(target+'님을 팀원 목록에서 삭제할까요?')){
+    onValue(ref(db, 'members'), function(snap){
+      var data = snap.val() || [];
+      var members = Array.isArray(data) ? data : Object.values(data);
+      members = members.filter(function(m){ return m !== target; });
+      set(ref(db, 'members'), members);
+      msgArea.innerHTML = '<span style="color:var(--green)">✅ '+target+'님 삭제됐습니다</span>';
+      setTimeout(function(){ msgArea.innerHTML=''; loadMemberList(); }, 1500);
+    }, { onlyOnce: true });
+  }
+});
+
+// 비밀번호 변경
+document.getElementById('admin-change-pw-btn').addEventListener('click', function(){
+  var newPw = document.getElementById('admin-new-pw').value.trim();
+  var msgArea = document.getElementById('admin-msg-area');
+  if(!newPw){ msgArea.innerHTML='<span style="color:var(--red)">비밀번호를 입력해 주세요</span>'; return; }
+  set(ref(db, 'config/password'), newPw);
+  document.getElementById('admin-new-pw').value = '';
+  msgArea.innerHTML = '<span style="color:var(--green)">✅ 비밀번호가 변경됐습니다</span>';
+  setTimeout(function(){ msgArea.innerHTML=''; }, 2000);
 });
 
 // 온라인 목록
