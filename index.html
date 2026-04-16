@@ -745,7 +745,10 @@ function proceedLogin(name){
   // 강제 로그아웃 신호 감지
   onValue(ref(db, 'force_logout/'+myName), function(snap){
     if(snap.val() && myName){
-      showToast('다른 기기에서 로그인되어 자동 로그아웃됩니다.');
+      var isShiftLogout = snap.val().shift === true;
+      if(!isShiftLogout){
+        showToast('다른 기기에서 로그인되어 자동 로그아웃됩니다.');
+      }
       setTimeout(function(){
         set(ref(db,'online/'+myName), null);
         remove(ref(db,'force_logout/'+myName));
@@ -754,13 +757,29 @@ function proceedLogin(name){
         document.getElementById('login-screen').style.display='flex';
         if(unsubMsg) unsubMsg();
         if(unsubTyping) unsubTyping();
-      }, 2000);
+      }, isShiftLogout ? 0 : 2000);
     }
   });
 
   push(ref(db,'messages'), { type:'system', text: myName+'님이 입장했습니다', time: serverTimestamp() });
   writeLog('입장');
   initAdmin();
+
+  // 교대 이후 남은 메시지 정리
+  onValue(ref(db,'config/lastShiftTime'), function(snap){
+    var data = snap.val();
+    if(!data || !data.time) return;
+    var shiftTime = data.time;
+    onValue(ref(db,'messages'), function(msnap){
+      var msgs = msnap.val() || {};
+      var hasOld = Object.values(msgs).some(function(m){
+        return m.time && m.time < shiftTime + 60000;
+      });
+      if(hasOld){
+        Object.keys(msgs).forEach(function(k){ remove(ref(db,'messages/'+k)); });
+      }
+    }, { onlyOnce: true });
+  }, { onlyOnce: true });
 
   unsubOnline = onValue(ref(db,'online'), function(snap){
     var data = snap.val()||{};
