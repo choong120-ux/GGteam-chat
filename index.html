@@ -1585,7 +1585,10 @@ function loadFeedbacks(){
     var data = snap.val();
     if(!data){ box.innerHTML = '<div class="empty"><div class="icon">💬</div><div class="text">아직 피드백이 없습니다</div></div>'; return; }
     var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
-    var html = '';
+    var html = '<div style="background:#ECFDF5;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch;margin-bottom:4px">'
+      + '<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:3px">📢 피드백 안내</div>'
+      + '<div style="font-size:11px;color:#047857;line-height:1.6">사용하면서 불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요!<br>익명으로도 남길 수 있어요 😊</div>'
+      + '</div>';
     list.forEach(function(f){
       html += '<div style="background:white;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch">';
       html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
@@ -1679,7 +1682,10 @@ document.getElementById('admin-feedback-load').addEventListener('click', functio
     var data = snap.val();
     if(!data){ box.innerHTML='<span style="color:var(--gray)">피드백이 없습니다</span>'; return; }
     var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
-    var html = '';
+    var html = '<div style="background:#ECFDF5;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch;margin-bottom:4px">'
+      + '<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:3px">📢 피드백 안내</div>'
+      + '<div style="font-size:11px;color:#047857;line-height:1.6">사용하면서 불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요!<br>익명으로도 남길 수 있어요 😊</div>'
+      + '</div>';
     list.forEach(function(f){
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
       html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
