@@ -631,17 +631,6 @@ body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;col
     <div class="admin-title">👑 관리자 메뉴</div>
 
     <div class="admin-section">
-      <div class="admin-section-title">💬 피드백 조회</div>
-      <div style="display:flex;gap:5px;margin-bottom:6px">
-        <button class="admin-btn primary" id="admin-feedback-load" style="margin-bottom:0">불러오기</button>
-        <button class="admin-btn danger" id="admin-feedback-clear" style="margin-bottom:0">전체 삭제</button>
-      </div>
-      <div id="admin-feedback-box" style="background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:200px;overflow-y:auto;font-size:11px;">
-        <span style="color:var(--gray)">불러오기 버튼을 눌러주세요</span>
-      </div>
-    </div>
-
-    <div class="admin-section">
       <div class="admin-section-title">📋 접속 이력</div>
       <div style="display:flex;gap:5px;margin-bottom:6px">
         <button class="admin-btn primary" id="admin-log-today" style="margin-bottom:0">오늘</button>
@@ -1588,18 +1577,30 @@ function loadFeedbacks(){
       + '<div style="font-size:11px;color:#047857;line-height:1.6">사용하면서 불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요!<br>익명으로도 남길 수 있어요 😊</div>'
       + '</div>';
     if(!data){ box.innerHTML = guideCard + '<div class="empty" style="flex:1"><div class="icon">💬</div><div class="text">아직 피드백이 없습니다</div></div>'; return; }
-    var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
+    var list = Object.keys(data).map(function(k){ var v=data[k]; v.key=k; return v; }).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
     var html = guideCard;
     list.forEach(function(f){
+      var isOwn = f.writerName === myName;
+      var isAdmin = myName === ADMIN_NAME;
       html += '<div style="background:white;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch">';
-      html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
       html += '<span style="font-size:11px;font-weight:700;color:#065F46">' + esc(f.name) + '</span>';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
       html += '<span style="font-size:10px;color:var(--gray)">' + esc(f.time) + '</span>';
-      html += '</div>';
+      if(isOwn || isAdmin) html += '<button style="font-size:10px;padding:1px 7px;border-radius:5px;border:1px solid #FCA5A5;background:white;color:#E24B4A;cursor:pointer" data-fbkey="' + esc(f.key) + '" class="fb-del-btn">삭제</button>';
+      html += '</div></div>';
       html += '<div style="font-size:12px;color:#222;line-height:1.5">' + esc(f.content) + '</div>';
       html += '</div>';
     });
     box.innerHTML = html;
+    box.querySelectorAll('.fb-del-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(confirm('이 피드백을 삭제할까요?')){
+          remove(ref(db, 'feedback/'+btn.getAttribute('data-fbkey')));
+          loadFeedbacks();
+        }
+      });
+    });
   }, { onlyOnce: true });
 }
 
@@ -1611,7 +1612,8 @@ document.getElementById('feedback-send-btn').addEventListener('click', function(
   var name = isAnon ? '익명' : myName;
   var now = new Date();
   var timeStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+' '+pad(now.getHours())+':'+pad(now.getMinutes());
-  push(ref(db,'feedback'), { name: name, content: content, time: timeStr });
+  var fbRef = push(ref(db,'feedback'));
+  set(fbRef, { name: name, writerName: myName, content: content, time: timeStr, key: fbRef.key });
   input.value = ''; input.style.height = 'auto';
   showToast('피드백이 전송됐습니다! 감사해요 😊');
   loadFeedbacks();
