@@ -436,6 +436,7 @@ body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;col
   <div class="empty"><div class="icon">💬</div><div class="text">채팅을 시작해 보세요!</div></div>
 </div>
 
+<div id="feedback-wrap" style="display:none;flex:1;overflow-y:auto;padding:14px;flex-direction:column;gap:6px;"></div>
 <div class="guide-wrap" id="guide-wrap">
   <div class="guide-section">
     <div class="guide-section-title">💬 채팅 기능</div>
@@ -530,6 +531,18 @@ body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;col
   <button class="send-btn" id="send-btn">➤</button>
 </div>
 
+<div class="notice-input-area" id="feedback-input-area" style="background:#F0FFF4;border-top:1px solid #A7F3D0;">
+  <div class="notice-input-wrap" style="border-color:#A7F3D0;">
+    <textarea id="feedback-input" placeholder="불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요" rows="1" style="color:#065F46;"></textarea>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+    <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#065F46;cursor:pointer">
+      <input type="checkbox" id="feedback-anon" checked> 익명
+    </label>
+    <button class="notice-send-btn" id="feedback-send-btn" style="background:#059669">💬</button>
+  </div>
+</div>
+
 <div class="notice-input-area" id="notice-input-area">
   <div class="notice-input-wrap">
     <textarea id="notice-input" placeholder="공지 내용을 입력하세요" rows="1"></textarea>
@@ -615,6 +628,17 @@ body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;col
 <div id="admin-modal">
   <div class="admin-box">
     <div class="admin-title">👑 관리자 메뉴</div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">💬 피드백 조회</div>
+      <div style="display:flex;gap:5px;margin-bottom:6px">
+        <button class="admin-btn primary" id="admin-feedback-load" style="margin-bottom:0">불러오기</button>
+        <button class="admin-btn danger" id="admin-feedback-clear" style="margin-bottom:0">전체 삭제</button>
+      </div>
+      <div id="admin-feedback-box" style="background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:200px;overflow-y:auto;font-size:11px;">
+        <span style="color:var(--gray)">불러오기 버튼을 눌러주세요</span>
+      </div>
+    </div>
 
     <div class="admin-section">
       <div class="admin-section-title">📋 접속 이력</div>
@@ -895,8 +919,9 @@ document.querySelectorAll('.tab').forEach(function(btn){
     var msgBox = document.getElementById('messages');
     if(currentTab==='dm'){ dmWrap.classList.add('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; subscribeMsg(); }
     else if(currentTab==='notice'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.add('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
-    else if(currentTab==='guide'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.remove('show'); guideWrap.classList.add('show'); msgBox.style.display='none'; dmTarget=''; }
-    else { dmWrap.classList.remove('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
+    else if(currentTab==='guide'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.remove('show'); guideWrap.classList.add('show'); document.getElementById('feedback-input-area').classList.remove('show'); document.getElementById('feedback-wrap').style.display='none'; msgBox.style.display='none'; dmTarget=''; }
+    else if(currentTab==='feedback'){ dmWrap.classList.remove('show'); inputArea.style.display='none'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); document.getElementById('feedback-input-area').classList.add('show'); document.getElementById('feedback-wrap').style.display='flex'; msgBox.style.display='none'; dmTarget=''; loadFeedbacks(); }
+    else { dmWrap.classList.remove('show'); inputArea.style.display='flex'; noticeArea.classList.remove('show'); guideWrap.classList.remove('show'); document.getElementById('feedback-input-area').classList.remove('show'); document.getElementById('feedback-wrap').style.display='none'; msgBox.style.display='flex'; dmTarget=''; subscribeMsg(); }
   });
 });
 
@@ -1551,6 +1576,45 @@ document.getElementById('schedule-submit').addEventListener('click', function(){
   showToast((d.getMonth()+1)+'월 '+d.getDate()+'일 '+pad(d.getHours())+':'+pad(d.getMinutes())+' 예약됐습니다!');
 });
 
+// 피드백 기능
+function loadFeedbacks(){
+  var box = document.getElementById('feedback-wrap');
+  box.innerHTML = '<div class="empty"><div class="icon">💬</div><div class="text">불러오는 중...</div></div>';
+  onValue(ref(db, 'feedback'), function(snap){
+    var data = snap.val();
+    if(!data){ box.innerHTML = '<div class="empty"><div class="icon">💬</div><div class="text">아직 피드백이 없습니다</div></div>'; return; }
+    var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
+    var html = '';
+    list.forEach(function(f){
+      html += '<div style="background:white;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+      html += '<span style="font-size:11px;font-weight:700;color:#065F46">' + esc(f.name) + '</span>';
+      html += '<span style="font-size:10px;color:var(--gray)">' + esc(f.time) + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:#222;line-height:1.5">' + esc(f.content) + '</div>';
+      html += '</div>';
+    });
+    box.innerHTML = html;
+  }, { onlyOnce: true });
+}
+
+document.getElementById('feedback-send-btn').addEventListener('click', function(){
+  var input = document.getElementById('feedback-input');
+  var content = input.value.trim();
+  if(!content){ showToast('피드백 내용을 입력해 주세요!'); return; }
+  var isAnon = document.getElementById('feedback-anon').checked;
+  var name = isAnon ? '익명' : myName;
+  var now = new Date();
+  var timeStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+' '+pad(now.getHours())+':'+pad(now.getMinutes());
+  push(ref(db,'feedback'), { name: name, content: content, time: timeStr });
+  input.value = ''; input.style.height = 'auto';
+  showToast('피드백이 전송됐습니다! 감사해요 😊');
+  loadFeedbacks();
+});
+
+document.getElementById('feedback-input').addEventListener('input', function(){ autoResize(this); });
+document.getElementById('feedback-input').addEventListener('keydown', function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); document.getElementById('feedback-send-btn').click(); } });
+
 // 관리자 기능
 var ADMIN_NAME = '최충일';
 var CHAT_PASSWORD = localStorage.getItem('gg_chat_pw') || '1234'; // 기본 비밀번호
@@ -1606,6 +1670,38 @@ function loadAccessLog(todayOnly){
     box.innerHTML = html;
   }, { onlyOnce: true });
 }
+
+document.getElementById('admin-feedback-load').addEventListener('click', function(){
+  var box = document.getElementById('admin-feedback-box');
+  box.innerHTML = '<span style="color:var(--gray)">불러오는 중...</span>';
+  onValue(ref(db,'feedback'), function(snap){
+    var data = snap.val();
+    if(!data){ box.innerHTML='<span style="color:var(--gray)">피드백이 없습니다</span>'; return; }
+    var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
+    var html = '';
+    list.forEach(function(f){
+      html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+      html += '<span style="font-weight:700;color:var(--navy)">'+f.name+'</span>';
+      html += '<span style="color:var(--gray)">'+f.time+'</span>';
+      html += '</div>';
+      html += '<div style="color:#444">'+f.content+'</div>';
+      html += '</div>';
+    });
+    html += '<div style="text-align:right;color:var(--gray);margin-top:4px">총 '+list.length+'건</div>';
+    box.innerHTML = html;
+  }, { onlyOnce: true });
+});
+
+document.getElementById('admin-feedback-clear').addEventListener('click', function(){
+  if(confirm('피드백을 전체 삭제할까요?')){
+    onValue(ref(db,'feedback'), function(snap){
+      var data = snap.val()||{};
+      Object.keys(data).forEach(function(k){ remove(ref(db,'feedback/'+k)); });
+      document.getElementById('admin-feedback-box').innerHTML = '<span style="color:var(--gray)">삭제됐습니다</span>';
+    }, { onlyOnce: true });
+  }
+});
 
 document.getElementById('admin-log-today').addEventListener('click', function(){ loadAccessLog(true); });
 document.getElementById('admin-log-all').addEventListener('click', function(){ loadAccessLog(false); });
