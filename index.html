@@ -534,7 +534,7 @@ body.dark .admin-input,.admin-select{background:#1A1A2E;border-color:#2D2D44;col
 
 <div class="notice-input-area" id="feedback-input-area" style="background:#F0FFF4;border-top:1px solid #A7F3D0;">
   <div class="notice-input-wrap" style="border-color:#A7F3D0;">
-    <textarea id="feedback-input" placeholder="불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요" rows="1" style="color:#065F46;"></textarea>
+    <textarea id="feedback-input" placeholder="피드백 입력..." rows="1" style="color:#065F46;"></textarea>
   </div>
   <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
     <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#065F46;cursor:pointer">
@@ -1583,12 +1583,13 @@ function loadFeedbacks(){
   box.innerHTML = '<div class="empty"><div class="icon">💬</div><div class="text">불러오는 중...</div></div>';
   onValue(ref(db, 'feedback'), function(snap){
     var data = snap.val();
-    if(!data){ box.innerHTML = '<div class="empty"><div class="icon">💬</div><div class="text">아직 피드백이 없습니다</div></div>'; return; }
-    var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
-    var html = '<div style="background:#ECFDF5;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch;margin-bottom:4px">'
+    var guideCard = '<div style="background:#ECFDF5;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch">'
       + '<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:3px">📢 피드백 안내</div>'
       + '<div style="font-size:11px;color:#047857;line-height:1.6">사용하면서 불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요!<br>익명으로도 남길 수 있어요 😊</div>'
       + '</div>';
+    if(!data){ box.innerHTML = guideCard + '<div class="empty" style="flex:1"><div class="icon">💬</div><div class="text">아직 피드백이 없습니다</div></div>'; return; }
+    var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
+    var html = guideCard;
     list.forEach(function(f){
       html += '<div style="background:white;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch">';
       html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
@@ -1682,10 +1683,7 @@ document.getElementById('admin-feedback-load').addEventListener('click', functio
     var data = snap.val();
     if(!data){ box.innerHTML='<span style="color:var(--gray)">피드백이 없습니다</span>'; return; }
     var list = Object.values(data).sort(function(a,b){ return b.time > a.time ? 1 : -1; });
-    var html = '<div style="background:#ECFDF5;border:1px solid #D1FAE5;border-radius:10px;padding:10px 12px;align-self:stretch;margin-bottom:4px">'
-      + '<div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:3px">📢 피드백 안내</div>'
-      + '<div style="font-size:11px;color:#047857;line-height:1.6">사용하면서 불편한 점, 추가됐으면 하는 기능 등 자유롭게 남겨주세요!<br>익명으로도 남길 수 있어요 😊</div>'
-      + '</div>';
+    var html = guideCard;
     list.forEach(function(f){
       html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
       html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
